@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAESTRO · Hospitality Operations Conductor</title>
+<style>
+/* ============================================================
+   MAESTRO · styles.css — stage-readable dark ops theme
+   ============================================================ */
+:root {
+  --bg: #0a101f;
+  --bg2: #0d1526;
+  --card: #111b30;
+  --card2: #16223c;
+  --line: #1f2e4d;
+  --text: #e8eefc;
+  --dim: #8fa0c2;
+  --gold: #e8b45a;
+  --teal: #4fd1c5;
+  --ok: #45d483;
+  --warn: #f0b429;
+  --bad: #ff5d6c;
+  --ai: #a78bfa;
+  --radius: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: radial-gradient(1200px 600px at 70% -10%, #14203c 0%, var(--bg) 55%);
+  color: var(--text);
+  font-family: "Inter", "SF Pro Display", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+}
+.hidden { display: none !important; }
+
+/* ============ header ============ */
+header {
+  display: flex; align-items: center; gap: 24px;
+  padding: 12px 22px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(10, 16, 31, 0.85);
+}
+.brand { display: flex; align-items: center; gap: 12px; min-width: 240px; }
+.logo {
+  width: 42px; height: 42px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold), #c98a2e);
+  color: #1a1206; font-weight: 800; font-size: 24px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 24px rgba(232, 180, 90, 0.35);
+}
+.brand-name { font-size: 20px; font-weight: 800; letter-spacing: 3px; }
+.brand-sub { font-size: 11px; color: var(--dim); letter-spacing: 1px; }
+
+.clock-wrap { flex: 1; text-align: center; position: relative; }
+#clock { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 2px; }
+#clock-day { font-size: 11px; color: var(--dim); letter-spacing: 1px; margin-top: -2px; }
+.timeline { height: 4px; background: var(--card2); border-radius: 4px; margin: 6px auto 2px; width: 70%; overflow: hidden; }
+#timeline-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--teal), var(--gold)); border-radius: 4px; transition: width .4s; }
+.next-beat { font-size: 10.5px; color: var(--dim); letter-spacing: .5px; }
+
+.controls { display: flex; align-items: center; gap: 8px; min-width: 380px; justify-content: flex-end; }
+.ctrl {
+  background: var(--card2); color: var(--text); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 12px; font-size: 14px; cursor: pointer;
+  transition: all .15s;
+}
+.ctrl:hover { border-color: var(--teal); }
+.ctrl.wide { font-size: 12px; }
+.ctrl.gold { background: linear-gradient(135deg, #3a2f14, #2a2210); border-color: var(--gold); color: var(--gold); }
+select.ctrl { padding: 8px 6px; }
+.badge { font-size: 10px; padding: 5px 9px; border-radius: 20px; letter-spacing: .5px; white-space: nowrap; }
+.badge.live { background: rgba(79, 209, 197, .12); color: var(--teal); border: 1px solid rgba(79, 209, 197, .4); }
+.badge.baked { background: rgba(143, 160, 194, .1); color: var(--dim); border: 1px solid var(--line); }
+
+/* ============ layout ============ */
+main {
+  display: grid;
+  grid-template-columns: minmax(480px, 1.35fr) minmax(420px, 1.1fr) 340px;
+  gap: 14px;
+  padding: 14px 18px;
+  height: calc(100vh - 92px);
+}
+.pane { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; scrollbar-width: thin; }
+.pane::-webkit-scrollbar { width: 6px; }
+.pane::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 12px 14px;
+}
+.card.grow { flex: 1; min-height: 120px; display: flex; flex-direction: column; }
+.card-head { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: var(--dim); margin-bottom: 10px; text-transform: uppercase; }
+.card-sub { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: .7; }
+.split { display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px; }
+.empty { color: var(--dim); font-size: 12px; font-style: italic; padding: 8px 2px; }
+
+/* ============ flags ============ */
+.flags { display: flex; flex-direction: column; gap: 6px; }
+.flag {
+  background: linear-gradient(90deg, rgba(255,93,108,.22), rgba(255,93,108,.05));
+  border: 1px solid rgba(255,93,108,.55); color: #ffd9dd;
+  padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: 13px;
+  animation: pulse 1.2s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .65; } }
+
+/* ============ KPIs ============ */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; text-align: center; }
+.kpi-value { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.kpi-value.ok { color: var(--ok); } .kpi-value.warn { color: var(--warn); } .kpi-value.bad { color: var(--bad); }
+.kpi-label { font-size: 10.5px; color: var(--dim); margin-top: 3px; letter-spacing: .6px; text-transform: uppercase; }
+
+/* ============ towels ============ */
+.towel-row { display: flex; align-items: center; gap: 14px; }
+.towel-bar { flex: 1; height: 16px; background: var(--bg2); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+.bar-fill { height: 100%; border-radius: 8px; transition: width .5s, background .5s; }
+.bar-fill.ok { background: linear-gradient(90deg, #2f9e63, var(--ok)); }
+.bar-fill.warn { background: linear-gradient(90deg, #b7861d, var(--warn)); }
+.bar-fill.bad { background: linear-gradient(90deg, #b23543, var(--bad)); }
+.towel-num { font-size: 20px; font-weight: 800; white-space: nowrap; }
+.towel-num span { color: var(--teal); }
+.towel-meta { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11.5px; color: var(--dim); }
+.towel-proj.warn { color: var(--warn); font-weight: 700; } .towel-proj.ok { color: var(--ok); }
+
+/* ============ equipment ============ */
+.equipment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.eq-tile { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.eq-tile.warn { border-color: rgba(240,180,41,.5); } .eq-tile.bad { border-color: rgba(255,93,108,.6); background: rgba(255,93,108,.06); }
+.eq-id { font-weight: 800; font-size: 13px; }
+.eq-name { font-size: 10px; color: var(--dim); }
+.eq-health { height: 5px; background: #0a1120; border-radius: 4px; margin: 6px 0 4px; overflow: hidden; }
+.eq-health-fill { height: 100%; border-radius: 4px; }
+.eq-health-fill.ok { background: var(--ok); } .eq-health-fill.warn { background: var(--warn); } .eq-health-fill.bad { background: var(--bad); }
+.eq-meta { display: flex; justify-content: space-between; font-size: 10px; color: var(--dim); }
+.eq-status.ok { color: var(--ok); } .eq-status.warn { color: var(--warn); } .eq-status.bad { color: var(--bad); font-weight: 700; }
+
+/* ============ roster & classes ============ */
+.roster { display: flex; flex-wrap: wrap; gap: 6px; }
+.staff-chip { display: flex; gap: 7px; align-items: center; background: var(--bg2); border: 1px solid var(--line); border-radius: 9px; padding: 6px 9px; min-width: 118px; }
+.staff-chip.bad { border-color: rgba(255,93,108,.6); background: rgba(255,93,108,.07); }
+.staff-chip.dim { opacity: .45; }
+.staff-chip.moved { border-color: rgba(79,209,197,.6); background: rgba(79,209,197,.07); }
+.staff-dot { font-size: 11px; }
+.staff-chip.ok .staff-dot { color: var(--ok); } .staff-chip.bad .staff-dot { color: var(--bad); }
+.staff-chip.moved .staff-dot { color: var(--teal); } .staff-chip.call .staff-dot { color: var(--warn); }
+.staff-name { font-weight: 700; font-size: 12px; }
+.staff-role { font-size: 10px; color: var(--dim); }
+.staff-shift { font-size: 9px; color: var(--dim); opacity: .7; }
+.class-row { background: var(--bg2); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font-size: 12px; margin-bottom: 6px; }
+.class-row.warn { border-color: rgba(240,180,41,.5); } .class-row.bad { border-color: rgba(255,93,108,.6); } .class-row.ok { border-color: rgba(69,212,131,.45); }
+.class-status { display: block; font-size: 10px; margin-top: 3px; letter-spacing: .5px; }
+.class-status.ok { color: var(--ok); } .class-status.warn { color: var(--warn); } .class-status.bad { color: var(--bad); }
+
+/* ============ task board ============ */
+.task-board { display: flex; flex-direction: column; gap: 5px; }
+.task-row { display: grid; grid-template-columns: 110px 1fr 70px 92px; gap: 8px; align-items: center; background: var(--bg2); border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; font-size: 12px; }
+.task-row.done { opacity: .5; }
+.task-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-who { color: var(--dim); font-size: 11px; }
+.task-status { font-size: 10px; text-align: right; color: var(--dim); }
+.task-status.en_route { color: var(--teal); font-weight: 700; }
+.task-status.done { color: var(--ok); font-weight: 700; }
+.task-status.assigned { color: var(--warn); }
+.dept-pill { font-size: 9.5px; font-weight: 700; padding: 3px 7px; border-radius: 20px; letter-spacing: .5px; text-align: center; display: inline-block; width: 100%; }
+.dept-pill.housekeeping { background: rgba(79,209,197,.14); color: var(--teal); }
+.dept-pill.engineering { background: rgba(240,180,41,.14); color: var(--warn); }
+.dept-pill.rostering { background: rgba(167,139,250,.16); color: var(--ai); }
+.dept-pill.guestcomms { background: rgba(232,180,90,.14); color: var(--gold); }
+.dept-pill.frontdesk { background: rgba(69,212,131,.14); color: var(--ok); }
+.dept-pill.concierge { background: rgba(255,93,108,.12); color: #ff9aa5; }
+.dept-pill.operations { background: rgba(143,160,194,.14); color: var(--dim); }
+
+/* ============ activity log ============ */
+.log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; max-height: 190px; scrollbar-width: thin; }
+.log-row { font-size: 11.5px; color: var(--dim); display: flex; gap: 8px; line-height: 1.45; }
+.log-row .log-t { color: #54648a; font-variant-numeric: tabular-nums; min-width: 38px; }
+.log-row.ai span:last-child { color: var(--ai); }
+.log-row.ok span:last-child { color: var(--ok); }
+.log-row.crisis span:last-child { color: var(--bad); font-weight: 700; }
+.log-row.warn span:last-child { color: var(--warn); }
+.log-row.task span:last-child { color: var(--teal); }
+.log-row.guest span:last-child { color: var(--gold); }
+
+/* ============ conductor pane ============ */
+.conductor { background: linear-gradient(180deg, rgba(167,139,250,.045), transparent 220px); border-radius: var(--radius); }
+.pane-head { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 4px; }
+.pane-title { font-weight: 800; letter-spacing: 2px; font-size: 13px; color: var(--ai); }
+.conductor-status { font-size: 11px; color: var(--dim); }
+
+.think-stream {
+  background: #0b1322; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px 14px; font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11.5px; line-height: 1.55; color: #b9c6e8; min-height: 92px; max-height: 210px;
+  overflow-y: auto; white-space: pre-wrap; scrollbar-width: thin;
+}
+.think-stream.live { border-color: rgba(167,139,250,.6); box-shadow: 0 0 18px rgba(167,139,250,.15); }
+.think-stream.live::after { content: "▍"; color: var(--ai); animation: blink .8s infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.think-stream.small { min-height: 40px; max-height: 110px; font-size: 10.5px; margin-bottom: 10px; }
+
+.approval-queue { display: flex; flex-direction: column; gap: 12px; }
+.appr-card {
+  background: var(--card); border: 1px solid rgba(167,139,250,.45);
+  border-radius: var(--radius); padding: 14px; box-shadow: 0 0 26px rgba(167,139,250,.09);
+}
+.appr-head { font-size: 11.5px; font-weight: 700; color: var(--ai); letter-spacing: 1px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+.appr-beat { color: var(--dim); font-weight: 400; text-transform: uppercase; font-size: 9.5px; letter-spacing: 1px; }
+.appr-analysis { font-size: 12px; line-height: 1.55; color: #c6d2ee; background: var(--bg2); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+
+.action { background: var(--bg2); border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; margin-bottom: 8px; }
+.action.resolved { opacity: .75; }
+.action.resolved.approved { border-color: rgba(69,212,131,.5); }
+.action.resolved.edited { border-color: rgba(79,209,197,.5); }
+.action.resolved.rejected { border-color: rgba(255,93,108,.4); }
+.action.rejected-card { border-color: rgba(255,93,108,.6); background: rgba(255,93,108,.05); }
+.action-title { font-weight: 700; font-size: 13px; line-height: 1.4; }
+.action-dept { display: flex; gap: 8px; align-items: center; margin: 7px 0; flex-wrap: wrap; }
+.action-dept .dept-pill { width: auto; }
+.sev { font-size: 9px; font-weight: 800; letter-spacing: 1px; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; }
+.sev.high { background: rgba(255,93,108,.15); color: var(--bad); }
+.sev.medium { background: rgba(240,180,41,.15); color: var(--warn); }
+.sev.low { background: rgba(143,160,194,.15); color: var(--dim); }
+.decision-note { font-size: 10.5px; color: var(--dim); }
+.action-why { font-size: 11.5px; color: var(--dim); line-height: 1.5; margin-bottom: 9px; }
+.action-btns { display: flex; gap: 8px; }
+.btn { border: 1px solid var(--line); border-radius: 9px; padding: 7px 13px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s; background: var(--card2); color: var(--text); }
+.btn.approve { background: rgba(69,212,131,.14); border-color: rgba(69,212,131,.5); color: var(--ok); }
+.btn.approve:hover { background: rgba(69,212,131,.28); }
+.btn.edit { background: rgba(79,209,197,.1); border-color: rgba(79,209,197,.4); color: var(--teal); }
+.btn.reject { background: rgba(255,93,108,.1); border-color: rgba(255,93,108,.4); color: var(--bad); }
+.btn.full { width: 100%; padding: 11px; }
+.edit-box { display: flex; flex-direction: column; gap: 7px; margin-bottom: 9px; }
+.edit-box label { font-size: 11px; color: var(--dim); display: flex; gap: 8px; align-items: center; }
+.edit-field { background: #0a1120; border: 1px solid var(--line); border-radius: 7px; color: var(--text); padding: 6px 8px; font-size: 12px; flex: 1; }
+.reject-box { margin-top: 8px; }
+.reject-label { font-size: 11px; color: var(--dim); margin-bottom: 7px; }
+.reject-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip { background: var(--card2); border: 1px solid rgba(255,93,108,.4); color: #ff9aa5; border-radius: 20px; padding: 6px 12px; font-size: 11.5px; cursor: pointer; transition: all .15s; }
+.chip:hover { background: rgba(255,93,108,.16); }
+
+.hist-wrap { margin-top: auto; }
+.hist-head { font-size: 10px; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; padding: 4px; }
+.hist-row { font-size: 11px; color: var(--dim); padding: 4px; font-variant-numeric: tabular-nums; }
+
+/* ============ guest phone ============ */
+.guest-pane { align-items: center; }
+.phone {
+  width: 320px; height: 660px; background: #0c1425;
+  border: 2px solid #2a3a5e; border-radius: 38px;
+  display: flex; flex-direction: column; overflow: hidden; position: relative;
+  box-shadow: 0 12px 50px rgba(0,0,0,.5), inset 0 0 0 4px #060a14;
+}
+.phone-notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 110px; height: 20px; background: #060a14; border-radius: 14px; z-index: 5; }
+.phone-head { display: flex; gap: 10px; align-items: center; padding: 40px 16px 12px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #131f38, #0c1425); }
+.phone-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), #b07a2a); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #1a1206; }
+.phone-name { font-weight: 700; font-size: 14px; }
+.phone-sub { font-size: 10.5px; color: var(--dim); }
+.phone-live { margin-left: auto; font-size: 9px; font-weight: 800; color: var(--ok); letter-spacing: 1px; animation: pulse 2s infinite; }
+
+.guest-lock { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--dim); text-align: center; }
+.qr { font-size: 64px; opacity: .5; }
+.lock-text { font-size: 13px; line-height: 1.6; }
+.lock-sub { font-size: 11px; opacity: .6; }
+
+.guest-feed { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 9px; scrollbar-width: thin; }
+.msg { max-width: 88%; border-radius: 14px; padding: 9px 12px; font-size: 12px; line-height: 1.5; }
+.msg.bot { background: var(--card2); border: 1px solid var(--line); border-bottom-left-radius: 4px; align-self: flex-start; }
+.msg.them { background: linear-gradient(135deg, #2d4a7a, #24406b); border-bottom-right-radius: 4px; align-self: flex-end; }
+.msg-t { font-size: 9px; color: var(--dim); margin-top: 4px; }
+
+.guest-tracker { padding: 0 12px; display: flex; flex-direction: column; gap: 8px; }
+.tracker-card { background: #0e1830; border: 1px solid rgba(79,209,197,.35); border-radius: 12px; padding: 9px 11px; }
+.tracker-card.done { border-color: rgba(69,212,131,.4); }
+.tracker-title { font-size: 11.5px; font-weight: 700; margin-bottom: 8px; }
+.tracker-steps { display: flex; align-items: center; }
+.tstep { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 52px; }
+.tdot { width: 9px; height: 9px; border-radius: 50%; background: #243352; }
+.tstep.on .tdot { background: var(--teal); box-shadow: 0 0 8px rgba(79,209,197,.7); }
+.tlabel { font-size: 8px; color: var(--dim); }
+.tstep.on .tlabel { color: var(--teal); }
+.tline { flex: 1; height: 2px; background: #243352; margin-bottom: 14px; }
+.tracker-eta { font-size: 10px; color: var(--dim); margin-top: 5px; }
+
+.guest-think { padding: 4px 14px; font-size: 10px; color: var(--ai); font-family: monospace; max-height: 46px; overflow: hidden; opacity: .85; }
+.guest-input-row { display: flex; gap: 8px; padding: 10px 12px 16px; border-top: 1px solid var(--line); }
+#guest-input { flex: 1; background: #0a1120; border: 1px solid var(--line); border-radius: 20px; color: var(--text); padding: 9px 14px; font-size: 12px; outline: none; }
+#guest-input:focus { border-color: var(--gold); }
+#guest-send { width: 38px; height: 38px; border-radius: 50%; border: none; background: linear-gradient(135deg, var(--gold), #c98a2e); color: #1a1206; font-size: 15px; cursor: pointer; }
+.guest-caption { font-size: 10.5px; color: var(--dim); text-align: center; margin-top: 10px; max-width: 300px; line-height: 1.5; }
+
+/* ============ modals ============ */
+.modal { position: fixed; inset: 0; background: rgba(4,8,16,.75); display: none; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(4px); }
+.modal.open { display: flex; }
+.modal-box { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px; width: 440px; max-height: 84vh; overflow-y: auto; }
+.modal-box.wide { width: 640px; }
+.modal-head { font-weight: 800; font-size: 16px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+.modal-x { background: none; border: none; color: var(--dim); font-size: 16px; cursor: pointer; }
+.modal-box label { display: block; font-size: 12px; color: var(--dim); margin-bottom: 14px; }
+.modal-box input, .modal-box select { width: 100%; margin-top: 6px; background: #0a1120; border: 1px solid var(--line); border-radius: 9px; color: var(--text); padding: 10px 12px; font-size: 13px; }
+.hint { font-size: 10px; opacity: .7; }
+
+/* brief */
+.brief-loading { color: var(--dim); font-style: italic; padding: 20px 0; }
+.dots::after { content: ""; animation: dots 1.2s infinite; }
+@keyframes dots { 0% { content: ""; } 33% { content: "."; } 66% { content: ".."; } }
+.brief-head { font-size: 11px; color: var(--dim); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+.brief-headline { font-size: 20px; font-weight: 800; color: var(--gold); line-height: 1.35; margin-bottom: 16px; }
+.brief-bullets { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+.brief-bullets li { font-size: 13px; line-height: 1.55; color: #c6d2ee; padding-left: 20px; position: relative; }
+.brief-bullets li::before { content: "›"; position: absolute; left: 4px; color: var(--teal); font-weight: 800; }
+.brief-tomorrow { background: var(--bg2); border: 1px solid var(--line); border-radius: 11px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6; color: #c6d2ee; }
+.brief-tomorrow b { color: var(--teal); }
+.brief-foot { font-size: 10px; color: var(--dim); margin-top: 12px; text-align: right; }
+
+/* toast */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--card2); border: 1px solid var(--warn); color: var(--warn); padding: 10px 18px; border-radius: 12px; font-size: 12.5px; transition: transform .3s; z-index: 99; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* small screens graceful */
+@media (max-width: 1400px) {
+  main { grid-template-columns: 1.3fr 1fr 300px; }
+  .phone { transform: scale(.92); transform-origin: top center; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <div class="brand">
+    <div class="logo">M</div>
+    <div>
+      <div class="brand-name">MAESTRO</div>
+      <div class="brand-sub">the operations conductor</div>
+    </div>
+  </div>
+
+  <div class="clock-wrap">
+    <div id="clock">17:30</div>
+    <div id="clock-day">Friday · Harbour Grand Hotel &amp; Club</div>
+    <div class="timeline"><div id="timeline-bar"></div></div>
+    <div id="next-beat" class="next-beat">Next beat: 17:40</div>
+  </div>
+
+  <div class="controls">
+    <button id="btn-play" class="ctrl" title="Play / pause (Space)">▶</button>
+    <select id="speed" class="ctrl" title="Simulation speed">
+      <option value="10">10×</option>
+      <option value="20">20×</option>
+      <option value="30">30×</option>
+      <option value="60" selected>60×</option>
+      <option value="120">120×</option>
+      <option value="300">300×</option>
+    </select>
+    <button id="btn-jump" class="ctrl wide" title="Jump to next beat (N)">⏭ Next beat</button>
+    <button id="btn-brief" class="ctrl wide gold" title="Evening Brief (B)">🌙 Evening Brief</button>
+    <button id="btn-settings" class="ctrl" title="Settings">⚙</button>
+    <div id="mode-badge" class="badge baked">○ OFFLINE · baked intelligence</div>
+  </div>
+</header>
+
+<!-- ============ THREE PANES ============ -->
+<main>
+
+  <!-- ======= LEFT · OPS BOARD ======= -->
+  <section class="pane ops">
+    <div id="flags" class="flags"></div>
+
+    <div class="kpi-row">
+      <div class="kpi" id="kpi-gym"><div class="kpi-value ok">18/60</div><div class="kpi-label">Gym occupancy</div></div>
+      <div class="kpi" id="kpi-arrivals"><div class="kpi-value ok">0/28</div><div class="kpi-label">Checked in</div></div>
+      <div class="kpi" id="kpi-wait"><div class="kpi-value ok">0m</div><div class="kpi-label">Avg check-in wait</div></div>
+      <div class="kpi" id="kpi-tasks"><div class="kpi-value ok">0</div><div class="kpi-label">Open tasks</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">🧺 Towel loop <span class="card-sub">gym floor ⇄ laundry</span></div>
+      <div class="towel-row">
+        <div class="towel-bar"><div id="towel-bar" class="bar-fill ok"></div></div>
+        <div class="towel-num"><span id="towel-num">120</span> on floor</div>
+      </div>
+      <div class="towel-meta">
+        <span id="towel-laundry">85 clean in laundry</span>
+        <span id="towel-proj" class="towel-proj ok">✓ no depletion projected before close</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">🏋️ Equipment readiness <span class="card-sub">live telemetry · T-03 is Ms. Chan's usual machine</span></div>
+      <div id="equipment-grid" class="equipment-grid"></div>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <div class="card-head">👥 Roster tonight</div>
+        <div id="roster" class="roster"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">📅 Classes</div>
+        <div id="classes"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">🧾 Task board <span class="card-sub">back-of-house dispatch</span></div>
+      <div id="task-board" class="task-board"><div class="empty">No tasks yet — the floor is quiet. For now.</div></div>
+    </div>
+
+    <div class="card grow">
+      <div class="card-head">📡 Activity feed</div>
+      <div id="log" class="log"></div>
+    </div>
+  </section>
+
+  <!-- ======= CENTER · CONDUCTOR ======= -->
+  <section class="pane conductor">
+    <div class="pane-head">
+      <span class="pane-title">🧠 MAESTRO CONDUCTOR</span>
+      <span id="conductor-status" class="conductor-status">standing by · watching all systems</span>
+    </div>
+
+    <div id="think-stream" class="think-stream"></div>
+
+    <div id="approval-queue" class="approval-queue">
+      <div class="empty">Conductor standing by — watching arrivals, gym telemetry, laundry, roster &amp; requests.</div>
+    </div>
+
+    <div class="hist-wrap">
+      <div class="hist-head">Decision history · humans stay in control</div>
+      <div id="conductor-history"></div>
+    </div>
+  </section>
+
+  <!-- ======= RIGHT · GUEST PHONE ======= -->
+  <section class="pane guest-pane">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-head">
+        <div class="phone-avatar">陈</div>
+        <div>
+          <div class="phone-name">Ms. Chan</div>
+          <div class="phone-sub" id="phone-sub">Room 1208 · Gold Member</div>
+        </div>
+        <div class="phone-live">LIVE</div>
+      </div>
+
+      <div id="guest-lock" class="guest-lock">
+        <div class="qr">▦</div>
+        <div class="lock-text">Phone unlocks when Ms. Chan<br>checks in at <b>18:05</b></div>
+        <div class="lock-sub">(or press ⏭ Next beat)</div>
+      </div>
+
+      <div id="guest-feed" class="guest-feed"></div>
+
+      <div id="guest-tracker" class="guest-tracker"></div>
+
+      <div id="guest-think" class="guest-think hidden"></div>
+
+      <div class="guest-input-row">
+        <input id="guest-input" type="text" placeholder="Ask Maestro anything…" autocomplete="off">
+        <button id="guest-send">➤</button>
+      </div>
+    </div>
+    <div class="guest-caption">front-of-house · every request becomes a tracked back-of-house task</div>
+  </section>
+
+</main>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div id="settings-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-head">⚙ Maestro settings <button id="btn-close-settings" class="modal-x">✕</button></div>
+    <label>Anthropic API key <span class="hint">(stays in this browser only — sent direct to Claude)</span>
+      <input id="set-key" type="password" placeholder="sk-ant-…">
+    </label>
+    <label>Claude proxy base URL <span class="hint">(optional — for gateways / relays; leave blank for api.anthropic.com)</span>
+      <input id="set-base" type="text" placeholder="https://api.anthropic.com">
+    </label>
+    <label>Model
+      <input id="set-model" type="text" placeholder="claude-sonnet-4-5">
+    </label>
+    <label>Demo mode
+      <select id="set-mode">
+        <option value="auto">Auto — live Claude if key present, else offline</option>
+        <option value="live">Force live (fail loudly if no key)</option>
+        <option value="baked">Force offline (pre-baked intelligence)</option>
+      </select>
+    </label>
+    <button id="btn-save-settings" class="btn approve full">Save</button>
+  </div>
+</div>
+
+<!-- ============ EVENING BRIEF MODAL ============ -->
+<div id="brief-modal" class="modal">
+  <div class="modal-box wide">
+    <div class="modal-head">🌙 Evening Brief <button id="btn-close-brief" class="modal-x">✕</button></div>
+    <div id="brief-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ============================================================
+   MAESTRO · data.js — seed data, scripted timeline, fallbacks
+   Harbour Grand Hotel · Friday evening simulation
+   ============================================================ */
+
+const SEED = {
+  hotel: "Harbour Grand Hotel & Club",
+  dayLabel: "Friday",
+  startMin: 17 * 60 + 30, // 17:30
+  endMin: 22 * 60,        // 22:00
+
+  // ---- Guests / arrivals -------------------------------------
+  arrivalsTotal: 28,       // booking surge 18:00–19:00
+  arrivals: [              // arrival times in sim-minutes (spread 18:00–19:00)
+    1080,1083,1086,1089,1092,1095,1098,1101,1104,1107,1110,1113,
+    1116,1119,1122,1125,1128,1131,1134,1137,1140,1143,1146,1149,
+    1152,1155,1158,1160
+  ],
+
+  // ---- VIP guest for the front-of-house story ----------------
+  vip: {
+    name: "Ms. Chan",
+    room: "1208",
+    tier: "Gold Member · 47 stays",
+    arrivalMin: 18 * 60 + 5, // 18:05
+    locker: 12,
+    usualMachine: "T-03",
+    notes: "Prefers low-impact options (left knee). Books HIIT Fridays.",
+    klass: "HIIT Burn · 18:30"
+  },
+
+  // ---- Gym & resources ---------------------------------------
+  gymCapacity: 60,
+  towels: { stock: 120, laundryPending: 150, usagePerGuestMin: 0.024 },
+  laundryRunAt: 19 * 60 + 45,   // scheduled laundry delivery 19:45 (+120)
+  laundryRunQty: 120,
+
+  // ---- Equipment ----------------------------------------------
+  equipment: [
+    { id: "T-01", name: "Treadmill 01", kind: "treadmill", health: 97 },
+    { id: "T-02", name: "Treadmill 02", kind: "treadmill", health: 94 },
+    { id: "T-03", name: "Treadmill 03", kind: "treadmill", health: 82, anomaly: true },
+    { id: "T-04", name: "Treadmill 04", kind: "treadmill", health: 96 },
+    { id: "B-01", name: "Spin Bike 01", kind: "bike",      health: 91 },
+    { id: "R-01", name: "Rower 01",     kind: "rower",     health: 98 }
+  ],
+
+  // ---- Staff roster --------------------------------------------
+  staff: [
+    { id: "ana",   name: "Ana",   role: "Front Desk",   shift: "16:00–22:00", status: "on" },
+    { id: "sofia", name: "Sofia", role: "Concierge",    shift: "16:00–22:00", status: "on" },
+    { id: "priya", name: "Priya", role: "Spa",          shift: "16:00–22:00", status: "on" },
+    { id: "marco", name: "Marco", role: "Housekeeping", shift: "14:00–22:00", status: "on" },
+    { id: "lena",  name: "Lena",  role: "Housekeeping", shift: "16:00–00:00", status: "on" },
+    { id: "ben",   name: "Ben",   role: "Trainer",      shift: "14:00–20:00", status: "on" },
+    { id: "mei",   name: "Mei",   role: "Trainer",      shift: "OFF today",   status: "off" },
+    { id: "jun",   name: "Jun",   role: "Engineering",  shift: "on-call",     status: "call" }
+  ],
+
+  // ---- Classes --------------------------------------------------
+  classes: [
+    { id: "hiit", name: "HIIT Burn", time: "18:30", trainerId: "ben", booked: 14, status: "scheduled" },
+    { id: "yoga", name: "Restorative Yoga", time: "19:30", trainerId: "mei", booked: 9, status: "needs-trainer" }
+  ]
+};
+
+/* ---------- Scripted timeline (fires by sim-minute) ------------
+   kinds: conductor | arrival-surge | sickness | chan-arrives |
+          class-time | towel-cliff | close
+-----------------------------------------------------------------*/
+const TIMELINE = [
+  { at: 17*60+40, kind: "conductor",   beat: "beatA",
+    log: "Conductor scan: check-in surge, towel trajectory & T-03 telemetry flagged" },
+  { at: 18*60+5,  kind: "chan-arrives", log: "Ms. Chan scans QR at the kiosk — check-in" },
+  { at: 18*60+10, kind: "sickness",     beat: "beatB",
+    log: "📞 Trainer Ben calls in sick — HIIT Burn (18:30, 14 booked) has no trainer" },
+  { at: 18*60+30, kind: "class-time",   log: "HIIT Burn class window opens" },
+  { at: 19*60+15, kind: "towel-cliff",  log: "Towel projection checkpoint (19:15)" },
+  { at: 21*60+40, kind: "chan-checkout", log: "Ms. Chan taps express check-out — Stay Story & preference learning" },
+  { at: 21*60+55, kind: "close",        log: "Operations day closing — Evening Brief ready" }
+];
+
+/* ---------- Pre-baked AI responses (offline fallback) ----------
+   Used when no API key / network fails. Shaped exactly like the
+   JSON we ask Claude for, so the UI path is identical.
+-----------------------------------------------------------------*/
+const BAKED = {
+  beatA: {
+    analysis:
+`Three converging risks detected for the 18:00–19:00 window:
+
+1) CHECK-IN SURGE — 28 arrivals booked between 18:00 and 19:00. With one front-desk agent on duty, projected average wait climbs past 9 minutes by 18:35.
+2) TOWEL TRAJECTORY — gym stock is 120 units. At projected occupancy (peak ~46 guests + the 18:30 HIIT class), consumption reaches zero by ≈19:30. Laundry holds 150 clean units, but the next scheduled run does not land until 19:45 — 15 minutes of guests waiting with nothing to dry off on.
+3) EQUIPMENT RISK — Treadmill T-03 shows a vibration anomaly (health 82%, falling ~1.4%/hr under load). Failure probability within 72 hrs: high. Two bookings reference T-03 tonight, including Ms. Chan's usual machine.
+
+Proposed playbook keeps every decision with the duty manager.`,
+    actions: [
+      { id: "a1", title: "Pre-stage 120 clean towels: laundry → gym floor",
+        department: "Housekeeping", severity: "high",
+        rationale: "Closes the ≈19:30 towel gap before the peak lands. Lena is on duty and laundry holds 150 clean units.",
+        effect: { type: "restock_towels", qty: 120, at: "18:30" } },
+      { id: "a2", title: "Take T-03 offline tonight · maintenance 06:00 · migrate bookings to T-02/T-04",
+        department: "Engineering", severity: "high",
+        rationale: "Removes failure risk during peak load; Jun (on-call) can service at 06:00 before the gym opens. Affected guests get a proactive note — no 'out of order' surprise.",
+        effect: { type: "equipment_offline", id: "T-03", maintenanceAt: "06:00 tomorrow", migrateBookings: 2 } },
+      { id: "a3", title: "Reassign Priya (Spa → Front Desk) for 18:00–20:00",
+        department: "Rostering", severity: "medium",
+        rationale: "Spa utilisation tonight is 31%. A second check-in agent holds average wait under 3 minutes through the surge.",
+        effect: { type: "reassign_staff", name: "Priya", to: "Front Desk", window: "18:00–20:00" } }
+    ]
+  },
+
+  beatB: {
+    analysis:
+`Rostering shock: Trainer Ben (HIIT Burn, 18:30) is out sick. 14 guests booked — 9 are hotel guests, 5 external members. The 19:30 Yoga also lists Mei (already off today).
+
+Options weighed: (a) cancel & rebook — refunds + churn risk on a Friday flagship class; (b) run with Mei on 1.5 hrs overtime — she is HIIT-certified, rested, 12 min away; (c) merge into Yoga — capacity/format mismatch.
+
+Recommendation: (b), with immediate guest comms so nobody arrives to a cancelled class.`,
+    actions: [
+      { id: "b1", title: "Call in Trainer Mei — HIIT Burn 18:30 (+1.5 h overtime)",
+        department: "Rostering", severity: "high",
+        rationale: "Mei is HIIT-certified and off today (rested). Overtime cost ≈ 1.5 h vs. 14 rebooking refunds and churn on the flagship Friday class.",
+        effect: { type: "swap_trainer", newTrainer: "Mei", overtimeHrs: 1.5, notifyCount: 14 } },
+      { id: "b2", title: "Notify 14 class guests: trainer change + free rebook option",
+        department: "Guest Comms", severity: "medium",
+        rationale: "Proactive message before 18:30 keeps satisfaction neutral; the rebook option covers guests who preferred Ben's format.",
+        effect: { type: "notify_guests", count: 14, message: "Tonight's HIIT Burn (18:30) will be led by Trainer Mei. Your spot is held — reply REBOOK for a free transfer to any class this week." } }
+    ]
+  },
+
+  replan: {
+    analysis:
+`Understood — previous proposal declined by the duty manager. Re-planning with tighter constraints: no laundry overtime, no external call-ins, minimal guest impact.`,
+    actions: [
+      { id: "r1", title: "Divert 60 towels from pool stock to gym (pool closes 20:00)",
+        department: "Housekeeping", severity: "medium",
+        rationale: "Pool demand drops after 19:00; 60 units bridge the gym gap to the 19:45 laundry run without overtime.",
+        effect: { type: "restock_towels", qty: 60, at: "18:45" } },
+      { id: "r2", title: "Load-limit T-03 (walk/jog only) + service tonight at 21:30",
+        department: "Engineering", severity: "medium",
+        rationale: "Interim derating cuts failure risk ~70%; Jun services after the evening peak instead of 06:00.",
+        effect: { type: "equipment_limit", id: "T-03", maintenanceAt: "21:30" } }
+    ]
+  },
+
+  conciergeRules: [
+    { match: ["towel"],            order: { type: "towels",       title: "Extra towels to gym floor",        etaMin: 6  },
+      reply: "Of course, Ms. Chan — fresh towels are on their way to the gym floor. Tracker updated below. 🧖‍♀️" },
+    { match: ["cold","sauna","temperature","ac","air"], order: { type: "maintenance", title: "Sauna temperature check", etaMin: 12 },
+      reply: "Sorry about that — I've flagged the sauna temperature to engineering right now. Jun is on it; I'll confirm the moment it's back in range." },
+    { match: ["broken","not working","stuck","noise","smell"], order: { type: "maintenance", title: "Equipment fault reported", etaMin: 10 },
+      reply: "Thanks for telling me — I've logged the fault and tagged the machine out so nobody else hits it. Engineering is en route." },
+    { match: ["clean","tidy","spill","mess"], order: { type: "housekeeping", title: "Clean-up requested", etaMin: 8 },
+      reply: "On it — housekeeping has been pinged with the exact location. Should be spotless within minutes." },
+    { match: ["water","bottle","drink"], order: { type: "amenity", title: "Water & refreshments", etaMin: 5 },
+      reply: "Chilled water and a citrus towel are coming over now. Enjoy the session! 💧" }
+  ],
+
+  conciergeFallbackReply:
+    "Noted, Ms. Chan — I've passed this to the floor team and opened a tracked request. You'll see live status below; anything urgent, just tap the bell."
+};
+
+/* ---------- Evening Brief fallback template -------------------- */
+function bakedBrief(stats, state) {
+  const towelLine = stats.towelCrisisAverted
+    ? "Towel gap closed proactively — stock never fell below " + stats.towelLowest + " units."
+    : "⚠ Towel stock hit zero at the gym. Next time, approve the pre-stage playbook earlier.";
+  return {
+    headline: stats.bottlenecksCaught + " bottlenecks caught before guests felt them.",
+    bullets: [
+      "Check-in surge absorbed: " + stats.checkedIn + " of " + SEED.arrivalsTotal + " arrivals processed, peak wait " + stats.maxWait + " min" + (stats.maxWait <= 4 ? " (target <5 ✅)" : " (target <5 missed)"),
+      towelLine,
+      "Equipment: T-03 taken out of rotation on predictive flag — no in-service failure, " + stats.bookingsMigrated + " bookings migrated with proactive guest notes",
+      stats.classSaved ? "HIIT Burn saved: 14 guests kept their Friday class (trainer swap, 1.5 h OT)" : "HIIT Burn cancelled — 14 rebooks issued",
+      "Guest requests handled: " + stats.guestRequests + ", average first response " + stats.avgResponse + " min",
+      stats.checkouts
+        ? "Express check-out closed the loop: Stay Story delivered, " + stats.prefsLearned + " preference(s) learned for the next visit, room refresh auto-dispatched"
+        : "No check-outs processed this evening",
+      "Decisions stayed human: " + stats.approved + " approved · " + stats.edited + " edited · " + stats.rejected + " rejected & re-planned"
+    ],
+    tomorrow: "Tomorrow's forecast: 22 arrivals (lighter), laundry run 20:00 as scheduled, T-03 back in service after 06:00 maintenance. Suggested focus: pool-side towel loop after 19:00."
+  };
+}
+
+</script>
+<script>
+/* ============================================================
+   MAESTRO · engine.js — simulation clock, ambient model,
+   timeline firing, effect application, task lifecycle, stats.
+   Pure state machine — no DOM. Emits via Engine.listeners.
+   ============================================================ */
+
+const Engine = (() => {
+  const listeners = { tick: [], event: [], state: [] };
+  const on = (name, fn) => listeners[name].push(fn);
+  const emit = (name, payload) => listeners[name].forEach(fn => fn(payload));
+
+  let state = null;
+  let raf = null, lastReal = 0;
+
+  /* ---------------- helpers ---------------- */
+  const fmt = m => {
+    m = ((Math.floor(m) % 1440) + 1440) % 1440;
+    return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+  };
+  const toMin = hhmm => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const irnd = (a, b) => Math.round(rnd(a, b));
+  const uid = (() => { let n = 0; return p => p + "-" + (++n); })();
+
+  function log(text, tag = "info") {
+    state.log.unshift({ t: fmt(state.t), text, tag });
+    if (state.log.length > 60) state.log.pop();
+    emit("state", { why: "log" });
+  }
+
+  /* ---------------- init ---------------- */
+  function init() {
+    state = {
+      t: SEED.startMin,            // sim clock (float minutes)
+      speed: 60,                   // sim-minutes per real minute
+      running: false,
+      lastWholeMin: Math.floor(SEED.startMin),
+
+      inGym: 18,
+      towels: { stock: SEED.towels.stock, laundry: SEED.towels.laundryPending },
+      arrivals: { total: SEED.arrivalsTotal, arrived: 0, checkedIn: 0, queue: 0, waits: [] },
+
+      equipment: SEED.equipment.map(e => ({ ...e, status: e.anomaly ? "watch" : "ok" })),
+      staff: SEED.staff.map(s => ({ ...s })),
+      classes: SEED.classes.map(c => ({ ...c })),
+
+      tasks: [],
+      approvals: [],       // pending
+      history: [],         // resolved approvals
+      guest: { checkedIn: false, checkedOut: false, messages: [], requests: [], unlocked: false, learnedPrefs: [] },
+      flags: [],           // crisis banners
+      stats: {
+        bottlenecksCaught: 0, actionsProposed: 0, approved: 0, edited: 0, rejected: 0,
+        guestRequests: 0, responses: [], towelLowest: SEED.towels.stock, towelCrisisAverted: true,
+        maxWait: 0, checkedIn: 0, bookingsMigrated: 0, classSaved: false
+      },
+      log: [],
+      timeline: TIMELINE.map(e => ({ ...e, fired: false })),
+      pendingEffects: [],  // {at, fn, label}
+      scheduledRestocks: [], // for towel projection: {at, qty}
+      beatContext: {}      // beat id -> context for re-plan
+    };
+    // scheduled laundry delivery 19:45 (+70 clean) — the "next run" the Conductor mentions
+    state.pendingEffects.push({
+      at: SEED.laundryRunAt,
+      label: "🧺 Scheduled laundry run delivered +" + SEED.laundryRunQty + " clean towels to the gym floor",
+      fn: () => {
+        state.towels.stock += SEED.laundryRunQty;
+        if (state.flags.includes("towel-out")) { state.flags = state.flags.filter(f => f !== "towel-out"); }
+      }
+    });
+    emit("state", { why: "init" });
+  }
+
+  /* ---------------- clock loop ---------------- */
+  function start() { state.running = true; lastReal = performance.now(); loop(lastReal); emit("state", { why: "clock" }); }
+  function pause() { state.running = false; if (raf) cancelAnimationFrame(raf); emit("state", { why: "clock" }); }
+  function toggle() { state.running ? pause() : start(); }
+  function setSpeed(s) { state.speed = s; emit("state", { why: "clock" }); }
+  function loop(now) {
+    if (!state.running) return;
+    const dtMin = ((now - lastReal) / 60000) * state.speed; // sim minutes elapsed
+    lastReal = now;
+    advance(dtMin);
+    raf = requestAnimationFrame(loop);
+  }
+  function advance(dtMin) {
+    const target = Math.min(state.t + dtMin, SEED.endMin);
+    // step whole sim-minutes one at a time so effects, timeline & ambient
+    // stay correctly interleaved even on big jumps ("Next beat")
+    while (Math.floor(target) > state.lastWholeMin) {
+      state.lastWholeMin++;
+      state.t = state.lastWholeMin;
+      ambientMinute(state.lastWholeMin);
+      fireTimeline();
+      firePendingEffects();
+      progressTasks();
+    }
+    state.t = target;
+    fireTimeline();
+    firePendingEffects();
+    progressTasks();
+    if (state.t >= SEED.endMin && state.running) pause();
+    emit("tick", state.t);
+  }
+  function jumpToNextBeat() {
+    const next = state.timeline.filter(e => !e.fired).sort((a, b) => a.at - b.at)[0];
+    if (!next) { log("No further beats scheduled.", "warn"); return; }
+    advance(Math.max(0.01, next.at - state.t));
+  }
+
+  /* ---------------- ambient model (per sim-minute) ---------------- */
+  function occupancyCurve(m) {
+    // ramp from 18 @17:30 to peak ~46 @18:45, plateau, decline to ~20 @21:30
+    if (m < 1050) return 16;
+    if (m < 1125) return 16 + (m - 1050) * (26 / 75);   // ramp 16 -> 42 by 18:45
+    if (m < 1215) return 42;                            // peak plateau
+    return Math.max(12, 42 - (m - 1215) * (30 / 105));  // wind down to ~12 by 22:00
+  }
+
+  function ambientMinute(m) {
+    // gym occupancy (class adds a bump 18:30–19:15 if running)
+    let occ = occupancyCurve(m) + rnd(-3, 3);
+    const hiit = state.classes.find(c => c.id === "hiit");
+    if (hiit && m >= 1110 && m <= 1155 && hiit.status !== "cancelled") occ += 10;
+    state.inGym = Math.max(8, Math.min(SEED.gymCapacity, Math.round(occ)));
+
+    // towel consumption
+    const used = state.inGym * SEED.towels.usagePerGuestMin;
+    if (state.towels.stock > 0) {
+      state.towels.stock = Math.max(0, Math.round((state.towels.stock - used) * 10) / 10);
+      state.towels.stock = Math.floor(state.towels.stock);
+    }
+    state.stats.towelLowest = Math.min(state.stats.towelLowest, state.towels.stock);
+    if (state.towels.stock === 0 && !state.flags.includes("towel-out")) {
+      state.flags.push("towel-out");
+      state.stats.towelCrisisAverted = false;
+      log("🚨 TOWELS OUT at the gym floor — guests waiting. Front-of-house impact is now visible.", "crisis");
+      emit("event", { kind: "crisis", what: "towel-out" });
+    }
+
+    // arrivals / check-in
+    while (state.arrivals.arrived < SEED.arrivals.length && SEED.arrivals[state.arrivals.arrived] <= m) {
+      state.arrivals.arrived++;
+      processCheckIn();
+    }
+
+    // equipment drift
+    state.equipment.forEach(e => {
+      if (e.status === "offline" || e.status === "maintenance") return;
+      const load = e.anomaly && e.status !== "limited" ? 1.4 : 0.15;
+      e.health = Math.max(5, +(e.health - load * rnd(0.5, 1.2) + rnd(-0.05, 0.05)).toFixed(1));
+      if (e.anomaly && e.status === "watch" && e.health < 60 && !state.flags.includes("t03-crit")) {
+        state.flags.push("t03-crit");
+        log("⚠ T-03 health below 60% — failure risk now severe under load.", "crisis");
+      }
+    });
+
+    emit("state", { why: "ambient" });
+  }
+
+  function frontDeskAgents() {
+    return state.staff.filter(s =>
+      s.status === "on" &&
+      (s.role === "Front Desk" || (s.reassignedTo === "Front Desk" && s.reassignUntil >= state.t))
+    ).length;
+  }
+
+  function processCheckIn() {
+    const agents = frontDeskAgents();
+    state.arrivals.queue++;
+    const wait = agents >= 2 ? irnd(1, 3) : irnd(4, 12);
+    state.arrivals.waits.push(wait);
+    state.stats.maxWait = Math.max(state.stats.maxWait, wait);
+    state.pendingEffects.push({
+      at: state.t + wait,
+      fn: () => {
+        state.arrivals.queue = Math.max(0, state.arrivals.queue - 1);
+        state.arrivals.checkedIn++;
+        state.stats.checkedIn = state.arrivals.checkedIn;
+        if (wait >= 8 && !state.flags.includes("queue")) {
+          state.flags.push("queue");
+          log("🚨 Check-in queue building — a guest just waited " + wait + " minutes.", "crisis");
+          emit("event", { kind: "crisis", what: "queue" });
+        }
+        if (agents >= 2 && state.arrivals.queue === 0 && state.flags.includes("queue")) {
+          state.flags = state.flags.filter(f => f !== "queue");
+        }
+      }
+    });
+  }
+
+  /* ---------------- timeline ---------------- */
+  function fireTimeline() {
+    state.timeline.forEach(ev => {
+      if (!ev.fired && state.t >= ev.at) {
+        ev.fired = true;
+        if (ev.log) log(ev.log, ev.kind === "conductor" || ev.kind === "sickness" ? "ai" : "info");
+        emit("event", ev);
+      }
+    });
+  }
+
+  function firePendingEffects() {
+    state.pendingEffects = state.pendingEffects.filter(pe => {
+      if (state.t >= pe.at) {
+        pe.fn();
+        if (pe.label) log(pe.label, "ok");
+        emit("state", { why: "effect" });
+        return false;
+      }
+      return true;
+    });
+  }
+
+  /* ---------------- tasks ---------------- */
+  function createTask({ title, department, priority = "normal", etaMin = 8, guestId = null, source = "ops" }) {
+    const assignee = pickAssignee(department);
+    const task = {
+      id: uid("task"), title, department, priority, etaMin, guestId, source,
+      assignee, status: "assigned", createdMin: state.t,
+      steps: [
+        { key: "received", at: state.t },
+        { key: "assigned", at: state.t + 1 },
+        { key: "en_route", at: state.t + Math.max(2, etaMin * 0.4) },
+        { key: "done",     at: state.t + etaMin }
+      ],
+      stepIdx: 0
+    };
+    state.tasks.unshift(task);
+    if (task.steps[1].at <= state.t) task.stepIdx = 1;
+    log("🧾 Task → " + department + ": " + title + (assignee ? " (" + assignee + ")" : ""), "task");
+    emit("state", { why: "task" });
+    return task;
+  }
+
+  function pickAssignee(department) {
+    const map = {
+      "Housekeeping": ["marco", "lena"],
+      "Engineering": ["jun"],
+      "Front Desk": ["ana", "priya"],
+      "Rostering": ["ana"],
+      "Guest Comms": ["sofia"],
+      "Concierge": ["sofia"]
+    };
+    const ids = map[department] || [];
+    for (const id of ids) {
+      const s = state.staff.find(x => x.id === id);
+      if (s && s.status !== "sick" && s.status !== "off") return s.name;
+    }
+    return state.staff.find(s => s.status === "on")?.name || "Duty team";
+  }
+
+  function progressTasks() {
+    let changed = false;
+    state.tasks.forEach(task => {
+      if (task.status === "done") return;
+      while (task.stepIdx < task.steps.length - 1 && state.t >= task.steps[task.stepIdx + 1].at) {
+        task.stepIdx++;
+        task.status = task.steps[task.stepIdx].key === "done" ? "done" : task.steps[task.stepIdx].key;
+        changed = true;
+        if (task.status === "done") {
+          log("✅ Done: " + task.title, "ok");
+          if (task.guestId === "chan") pushGuestMsg("✅ Your request is complete: " + task.title + ". Anything else, just ask — enjoy your evening, Ms. Chan!");
+        } else if (task.guestId === "chan") {
+          pushGuestMsg("🛎 Status: " + labelFor(task.status) + " — " + task.title + (task.assignee ? " · " + task.assignee + " is on it" : ""));
+        }
+      }
+    });
+    if (changed) emit("state", { why: "tasks" });
+  }
+  const labelFor = s => ({ assigned: "Assigned", en_route: "On the way", done: "Completed" }[s] || s);
+
+  /* ---------------- guest (Ms. Chan) ---------------- */
+  function pushGuestMsg(text, from = "maestro") {
+    state.guest.messages.push({ from, text, t: fmt(state.t) });
+    emit("state", { why: "guest" });
+  }
+
+  function chanCheckIn() {
+    if (state.guest.checkedIn) return;
+    state.guest.unlocked = true;
+    state.guest.checkedIn = true;
+    state.guest.checkedInMin = state.t;
+    const t03 = state.equipment.find(e => e.id === "T-03");
+    const hiit = state.classes.find(c => c.id === "hiit");
+    const trainer = hiit.status === "swapped" ? "Trainer Mei" : (hiit.status === "cancelled" ? null : "Trainer Ben");
+    let machineLine = "Your usual " + SEED.vip.usualMachine + " is ready for you.";
+    if (t03.status === "offline" || t03.status === "maintenance") {
+      machineLine = "Your usual T-03 is in preventive maintenance tonight — we've reserved T-02 for you, already set to your saved incline & pace.";
+    } else if (t03.status === "limited") {
+      machineLine = "Heads-up: T-03 is on a light load-limit tonight — T-02 is reserved for you with your saved settings.";
+    }
+    let classLine = trainer
+      ? "HIIT Burn at 18:30 — " + (hiit.status === "swapped" ? "led by Trainer Mei tonight (Ben is off sick). Your spot is held, and we've noted your knee: Mei will offer low-impact variations." : "led by Trainer Ben. We've noted your knee: low-impact variations will be offered.")
+      : "Tonight's HIIT Burn was cancelled — we've transferred you free of charge to Saturday's 10:00 session (spot held).";
+    pushGuestMsg(
+      "Welcome back, Ms. Chan! ✨ Gold Member · stay #47\n\n" +
+      "• Check-in complete — Room 1208, key on your phone\n" +
+      "• Locker " + SEED.vip.locker + " reserved (near the treadmills, as usual)\n" +
+      "• " + machineLine + "\n" +
+      "• " + classLine + "\n\nNeed anything at all, message me here — I'm live all evening.",
+      "maestro"
+    );
+    emit("event", { kind: "chan-checked-in" });
+  }
+
+  /* ---------------- express check-out + Stay Story ---------------- */
+  function checkoutChan() {
+    if (!state.guest.checkedIn) { log("Check-out skipped — guest never checked in.", "warn"); return; }
+    if (state.guest.checkedOut) return;
+    state.guest.checkedOut = true;
+    state.guest.checkedOutMin = state.t;
+
+    // back-of-house cascade triggered by a front-of-house event
+    createTask({ title: "Room 1208 refresh & mini-bar audit", department: "Housekeeping", priority: "normal", etaMin: 12 });
+    createTask({ title: "Express folio settlement — Room 1208", department: "Front Desk", priority: "normal", etaMin: 4 });
+
+    // learn preferences from tonight's actual behaviour
+    const reqs = state.tasks.filter(t => t.guestId === "chan");
+    const done = reqs.filter(t => t.status === "done").length;
+    const prefs = [];
+    if (reqs.some(t => /towel/i.test(t.title))) prefs.push("likes extra towels staged at the gym");
+    if (reqs.some(t => /sauna|temperature|cold/i.test(t.title))) prefs.push("sensitive to sauna temperature — pre-check before arrival");
+    const hiit = state.classes.find(c => c.id === "hiit");
+    if (hiit.status === "swapped") prefs.push("Friday HIIT regular — notify early if the trainer changes");
+    if (!prefs.length) prefs.push("prefers low-impact options (left knee)");
+    state.guest.learnedPrefs = prefs;
+
+    const classLine = hiit.status === "swapped" ? "HIIT Burn — attended with Trainer Mei 💪"
+      : hiit.status === "cancelled" ? "HIIT Burn — cancelled (free rebook added to your account)"
+      : "HIIT Burn — attended";
+    pushGuestMsg(
+      "🌙 Express check-out complete — thank you, Ms. Chan!\n\n" +
+      "✨ Your evening at Harbour Grand:\n" +
+      "• In " + fmt(state.guest.checkedInMin || 1085) + " · out " + fmt(state.t) + " — folio closed, receipt emailed\n" +
+      "• " + classLine + "\n" +
+      "• " + reqs.length + " request" + (reqs.length === 1 ? "" : "s") + " · " + done + " completed · locker " + SEED.vip.locker + " released\n\n" +
+      "📝 Notes for your next stay: " + prefs.join(" · ") + "\n\nUntil next time — the team is already looking forward to it. 🏨",
+      "maestro"
+    );
+    log("🌙 Ms. Chan checked out — Stay Story delivered, " + prefs.length + " preference(s) learned, room refresh dispatched.", "guest");
+    emit("event", { kind: "chan-checked-out" });
+  }
+
+  /* ---------------- approvals & effects ---------------- */
+  function proposeApproval(beat, analysis, actions) {
+    const card = { id: uid("appr"), beat, analysis, actions: actions.map(a => ({ ...a, decision: null })), created: fmt(state.t), resolved: false };
+    state.approvals.push(card);
+    state.stats.actionsProposed += actions.length;
+    state.stats.bottlenecksCaught += beat === "beatA" ? 3 : beat === "beatB" ? 1 : 0;
+    state.beatContext[card.id] = { beat, analysis, actions };
+    log("🧠 Maestro proposes " + actions.length + " action(s) — awaiting duty-manager decision.", "ai");
+    emit("state", { why: "approval" });
+    return card;
+  }
+
+  function applyEffect(effect, actionTitle) {
+    const at = m => { const t = typeof m === "number" ? m : toMin(String(m).split(" ")[0]); return t <= state.t ? state.t + 3 : t; };
+    switch (effect.type) {
+      case "restock_towels": {
+        const qty = +effect.qty || 25;
+        const atMin = at(effect.at || fmt(state.t + 20));
+        const restock = { at: atMin, qty };
+        state.scheduledRestocks.push(restock);
+        state.pendingEffects.push({
+          at: atMin,
+          label: "🧺 +" + qty + " clean towels staged on the gym floor (from laundry)",
+          fn: () => {
+            state.towels.stock += qty;
+            state.towels.laundry = Math.max(0, state.towels.laundry - qty);
+            state.scheduledRestocks = state.scheduledRestocks.filter(r => r !== restock);
+            if (state.flags.includes("towel-out")) { state.flags = state.flags.filter(f => f !== "towel-out"); state.stats.towelCrisisAverted = true; }
+          }
+        });
+        createTask({ title: actionTitle, department: "Housekeeping", priority: "high", etaMin: 10 });
+        break;
+      }
+      case "equipment_offline": {
+        const eq = state.equipment.find(e => e.id === effect.id);
+        if (eq) { eq.status = "offline"; state.flags = state.flags.filter(f => f !== "t03-crit"); }
+        state.stats.bookingsMigrated += +effect.migrateBookings || 0;
+        createTask({ title: actionTitle, department: "Engineering", priority: "high", etaMin: 12 });
+        break;
+      }
+      case "equipment_limit": {
+        const eq = state.equipment.find(e => e.id === effect.id);
+        if (eq) { eq.status = "limited"; eq.anomaly = true; }
+        createTask({ title: actionTitle, department: "Engineering", priority: "medium", etaMin: 12 });
+        break;
+      }
+      case "reassign_staff": {
+        const s = state.staff.find(x => x.name === effect.name);
+        if (s) {
+          s.reassignedTo = effect.to;
+          s.reassignUntil = at((effect.window || "").includes("20:00") ? 1200 : state.t + 120);
+          s.status = "on";
+        }
+        break;
+      }
+      case "swap_trainer": {
+        const hiit = state.classes.find(c => c.id === "hiit");
+        hiit.status = "swapped";
+        hiit.trainerId = "mei";
+        const mei = state.staff.find(s => s.id === "mei");
+        mei.status = "on"; mei.shift = "Called in · OT 1.5h";
+        state.stats.classSaved = true;
+        if (state.guest.checkedIn) {
+          pushGuestMsg("🔄 Small update: tonight's HIIT Burn (18:30) will be led by Trainer Mei — Ben is off sick. Your spot is held, and Mei has your knee note: she'll cue low-impact variations for you.");
+        }
+        createTask({ title: actionTitle, department: "Rostering", priority: "high", etaMin: 6 });
+        break;
+      }
+      case "notify_guests": {
+        createTask({ title: actionTitle + " (" + effect.count + " guests)", department: "Guest Comms", priority: "normal", etaMin: 5 });
+        break;
+      }
+      case "create_task": {
+        createTask({ title: effect.title || actionTitle, department: effect.department || "Operations", priority: effect.priority || "normal", etaMin: effect.etaMin || 8 });
+        break;
+      }
+      default:
+        createTask({ title: actionTitle, department: effect.department || "Operations", priority: "normal", etaMin: 8 });
+    }
+    emit("state", { why: "effect-applied" });
+  }
+
+  function decide(cardId, actionId, decision, patch) {
+    const card = state.approvals.find(c => c.id === cardId);
+    const action = card.actions.find(a => a.id === actionId);
+    action.decision = decision;
+    if (patch) action.effect = { ...action.effect, ...patch };
+    if (decision === "approved" || decision === "edited") {
+      state.stats[decision]++;
+      applyEffect(action.effect, action.title);
+    } else if (decision === "rejected") {
+      state.stats.rejected++;
+      log("✋ Rejected: " + action.title, "warn");
+    }
+    if (card.actions.every(a => a.decision)) {
+      card.resolved = true;
+      state.approvals = state.approvals.filter(c => c.id !== cardId);
+      state.history.unshift(card);
+    }
+    emit("state", { why: "decision" });
+    return action.decision === "rejected";
+  }
+
+  /* ---------------- guest requests (concierge) ---------------- */
+  function addGuestRequest(order, replyText) {
+    if (order) {
+      const task = createTask({
+        title: order.title, department: deptForType(order.type),
+        priority: order.priority || "normal", etaMin: order.etaMin || 8, guestId: "chan", source: "guest"
+      });
+      state.stats.guestRequests++;
+      state.guest.requests.push({ taskId: task.id, title: order.title });
+    }
+    if (replyText) pushGuestMsg(replyText, "maestro");
+  }
+  function deptForType(t) {
+    return { towels: "Housekeeping", maintenance: "Engineering", housekeeping: "Housekeeping", amenity: "Concierge" }[t] || "Concierge";
+  }
+
+  /* ---------------- evening brief ---------------- */
+  function briefStats() {
+    const s = state.stats;
+    s.avgResponse = s.responses.length
+      ? Math.round((s.responses.reduce((a, b) => a + b, 0) / s.responses.length) * 10) / 10
+      : 1;
+    return {
+      ...s,
+      checkouts: state.guest.checkedOut ? 1 : 0,
+      prefsLearned: (state.guest.learnedPrefs || []).length,
+      time: fmt(state.t)
+    };
+  }
+
+  /* ---------------- public ---------------- */
+  return {
+    init, on, start, pause, toggle, setSpeed, jumpToNextBeat, advance,
+    fmt, toMin, get state() { return state; }, occupancyCurve,
+    log, proposeApproval, decide, createTask, addGuestRequest, pushGuestMsg,
+    chanCheckIn, checkoutChan, briefStats, labelFor
+  };
+})();
+
+</script>
+<script>
+/* ============================================================
+   MAESTRO · ai.js — Claude integration layer
+   · Conductor agent (bottleneck analysis → action playbook)
+   · Guest concierge (free-text → tracked work order)
+   · Evening Brief writer
+   · Streams deltas to the "AI thinking" panel
+   · Falls back to pre-baked intelligence offline (demo-safe)
+   ============================================================ */
+
+const AI = (() => {
+  // sandbox-proof storage (preview iframes may forbid localStorage)
+  const mem = {};
+  const store = {
+    get(k) { try { const v = localStorage.getItem(k); return v === null ? (k in mem ? mem[k] : null) : v; } catch (e) { return k in mem ? mem[k] : null; } },
+    set(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) { /* memory only */ } }
+  };
+
+  function settings() {
+    return {
+      apiKey: store.get("maestro_key") || "",
+      model: store.get("maestro_model") || "claude-sonnet-4-5",
+      base: (store.get("maestro_base") || "https://api.anthropic.com").replace(/\/+$/, ""),
+      mode: store.get("maestro_mode") || "auto" // auto | live | baked
+    };
+  }
+  const endpoint = () => settings().base + "/v1/messages";
+  function save(k, v) { store.set(k, v); }
+  // live = a key in the browser OR a custom proxy base URL (proxy holds the key server-side)
+  function isLive() {
+    const s = settings();
+    return (s.mode === "live" || s.mode === "auto") && (!!s.apiKey || s.base !== "https://api.anthropic.com");
+  }
+  function canCall() { return isLive(); }
+
+  /* ---------- low-level Claude call (browser direct, SSE stream) ---------- */
+  async function callClaude({ system, user, onDelta, maxTokens = 2000, timeoutMs = 30000 }) {
+    const { apiKey, model } = settings();
+    const headers = {
+      "content-type": "application/json",
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    };
+    if (apiKey) headers["x-api-key"] = apiKey;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetch(endpoint(), {
+        method: "POST",
+        signal: ctrl.signal,
+        headers,
+        body: JSON.stringify({ model, max_tokens: maxTokens, system, stream: true, messages: [{ role: "user", content: user }] })
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error("Claude API " + res.status + " " + txt.slice(0, 200));
+      }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "", full = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const parts = buf.split("\n\n");
+        buf = parts.pop();
+        for (const part of parts) {
+          for (const line of part.split("\n")) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6);
+            if (data === "[DONE]") continue;
+            try {
+              const ev = JSON.parse(data);
+              if (ev.type === "content_block_delta" && ev.delta && ev.delta.type === "text_delta") {
+                full += ev.delta.text;
+                if (onDelta) onDelta(ev.delta.text, full);
+              }
+              if (ev.type === "error") throw new Error("stream error");
+            } catch (e) { /* ignore keep-alive/parse noise */ }
+          }
+        }
+      }
+      return full;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /* ---------- lenient JSON extraction ---------- */
+  function extractJSON(text) {
+    if (!text) return null;
+    let t = text.replace(/```json/gi, "```").trim();
+    const start = t.indexOf("{");
+    if (start < 0) return null;
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < t.length; i++) {
+      const ch = t[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (ch === "\\") esc = true;
+        else if (ch === '"') inStr = false;
+      } else {
+        if (ch === '"') inStr = true;
+        else if (ch === "{") depth++;
+        else if (ch === "}") { depth--; if (depth === 0) { try { return JSON.parse(t.slice(start, i + 1)); } catch (e) { return null; } } }
+      }
+    }
+    return null;
+  }
+
+  /* ================= CONDUCTOR ================= */
+  const CONDUCTOR_SYSTEM =
+`You are MAESTRO, the AI operations conductor for the Harbour Grand Hotel & Club (gym, spa, front desk, housekeeping).
+You receive a JSON snapshot of live operations. Your job:
+1. Identify converging bottlenecks BEFORE guests feel them (front-of-house AND back-of-house).
+2. Propose 2–4 concrete actions. Every action keeps a HUMAN in control — the duty manager approves, edits or rejects each one.
+Respond with ONLY a JSON object, no markdown fences:
+{
+  "analysis": "concise multi-line operational read-out; name numbers, times and risks; 3 short numbered findings then a one-line recommendation",
+  "actions": [
+    {
+      "id": "short-unique-id",
+      "title": "imperative one-liner a manager can approve at a glance",
+      "department": "Housekeeping|Engineering|Rostering|Guest Comms|Front Desk|Concierge|Operations",
+      "severity": "high|medium|low",
+      "rationale": "why now, why this, with numbers from the snapshot",
+      "effect": { "type": "restock_towels|equipment_offline|equipment_limit|reassign_staff|swap_trainer|notify_guests|create_task", ...params }
+    }
+  ]
+}
+Effect params by type:
+· restock_towels: {qty:int, at:"HH:MM"}
+· equipment_offline: {id:"T-03", maintenanceAt:"06:00 tomorrow", migrateBookings:int}
+· equipment_limit: {id:"T-03", maintenanceAt:"HH:MM"}
+· reassign_staff: {name:"StaffName", to:"Front Desk", window:"HH:MM–HH:MM"}
+· swap_trainer: {newTrainer:"Name", overtimeHrs:number, notifyCount:int}
+· notify_guests: {count:int, message:"guest-facing copy"}
+· create_task: {title, department, priority:"high|normal", etaMin:int}
+Stay strictly within the snapshot facts. Be decisive, specific, calm.`;
+
+  function snapshotJSON() {
+    const s = Engine.state;
+    const proj = projectTowelDepletion();
+    return JSON.stringify({
+      sim_clock: Engine.fmt(s.t) + " (Friday evening)",
+      front_desk: { arrivals_expected_tonight: s.arrivals.total, arrived: s.arrivals.arrived, checked_in: s.arrivals.checkedIn, queue_now: s.arrivals.queue, agents_on_duty: countFrontDesk(), recent_avg_wait_min: avgWait() },
+      gym: { capacity: SEED.gymCapacity, occupancy_now: s.inGym, classes: s.classes.map(c => ({ name: c.name, time: c.time, trainer: (s.staff.find(x => x.id === c.trainerId) || {}).name, booked: c.booked, status: c.status })) },
+      towels: { gym_stock: Math.round(s.towels.stock), laundry_clean_available: s.towels.laundry, projected_depletion: proj ? Engine.fmt(proj) + " (≈" + Math.max(0, Math.round(proj - s.t)) + " min from now)" : "not projected before close" },
+      equipment: s.equipment.map(e => ({ id: e.id, health_pct: e.health, status: e.status, anomaly: !!e.anomaly })),
+      staff: s.staff.map(x => ({ name: x.name, role: x.reassignedTo ? x.role + " → " + x.reassignedTo : x.role, shift: x.shift, status: x.status })),
+      open_tasks: s.tasks.filter(t => t.status !== "done").slice(0, 6).map(t => ({ title: t.title, dept: t.department })),
+      flags: s.flags,
+      vip_guest_in_house: { name: SEED.vip.name, tier: SEED.vip.tier, notes: SEED.vip.notes, usual_machine: SEED.vip.usualMachine, booked_class: SEED.vip.klass }
+    }, null, 1);
+  }
+
+  function countFrontDesk() {
+    return Engine.state.staff.filter(s => s.status === "on" && (s.role === "Front Desk" || s.reassignedTo === "Front Desk")).length;
+  }
+  function avgWait() {
+    const w = Engine.state.arrivals.waits.slice(-10);
+    return w.length ? Math.round(w.reduce((a, b) => a + b, 0) / w.length) : 0;
+  }
+  function projectTowelDepletion() {
+    const s = Engine.state;
+    let stock = s.towels.stock;
+    const restocks = s.scheduledRestocks || [];
+    const hiit = s.classes.find(c => c.id === "hiit");
+    for (let m = Math.ceil(s.t); m <= SEED.endMin; m++) {
+      restocks.forEach(r => { if (Math.floor(r.at) === m) stock += r.qty; });
+      if (Math.floor(SEED.laundryRunAt) === m) stock += SEED.laundryRunQty;
+      let occ = Engine.occupancyCurve(m);
+      if (hiit && m >= 1110 && m <= 1155 && hiit.status !== "cancelled") occ += 10;
+      stock -= occ * SEED.towels.usagePerGuestMin;
+      if (stock <= 0) return m;
+    }
+    return null;
+  }
+
+  async function conductor({ beat, onDelta, extra }) {
+    let user = "LIVE OPERATIONS SNAPSHOT:\n" + snapshotJSON();
+    if (extra) user += "\n\nMANAGER FEEDBACK (a previous action was rejected — re-plan around this constraint):\n" + extra;
+    try {
+      if (!canCall()) throw new Error("no-key");
+      const raw = await callClaude({ system: CONDUCTOR_SYSTEM, user, onDelta, maxTokens: 1800 });
+      const parsed = extractJSON(raw);
+      if (!parsed || !Array.isArray(parsed.actions) || !parsed.actions.length) throw new Error("bad-json");
+      parsed.actions = parsed.actions.slice(0, 4).map((a, i) => ({
+        id: a.id || ("x" + i), title: a.title || "Action", department: a.department || "Operations",
+        severity: a.severity || "medium", rationale: a.rationale || "", effect: a.effect || { type: "create_task", title: a.title }
+      }));
+      return { analysis: parsed.analysis || "", actions: parsed.actions, live: true };
+    } catch (err) {
+      if (err.message !== "no-key") toastFallback(err.message);
+      const key = extra ? "replan" : beat;
+      const baked = BAKED[key] || BAKED.beatA;
+      return { analysis: baked.analysis, actions: JSON.parse(JSON.stringify(baked.actions)), live: false };
+    }
+  }
+
+  /* ================= CONCIERGE ================= */
+  function conciergeSystem() {
+    const s = Engine.state;
+    return `You are the AI concierge ("Maestro") chatting with ${SEED.vip.name}, ${SEED.vip.tier}, room ${SEED.vip.room}, at the Harbour Grand Hotel & Club gym, Friday ${Engine.fmt(s.t)}.
+Her profile: ${SEED.vip.notes} Usual machine ${SEED.vip.usualMachine}. Tonight's context: gym occupancy ${s.inGym}/${SEED.gymCapacity}; towel stock ${Math.round(s.towels.stock)}; HIIT class status ${s.classes.find(c => c.id === "hiit").status}; T-03 status ${s.equipment.find(e => e.id === "T-03").status}.
+Reply with ONLY JSON:
+{"reply":"warm, concise, 1-3 sentences, human, lightly personal (use her context when relevant; a single emoji max)",
+ "order": null | {"type":"towels|maintenance|housekeeping|amenity","title":"5-8 word work-order title","priority":"high|normal","etaMin":integer 4-15}}
+Create an order ONLY if she asks for something actionable or reports a problem. Never invent facilities. Never expose internal ops details beyond reassurance.`;
+  }
+
+  async function concierge(userText, history, onDelta) {
+    try {
+      if (!canCall()) throw new Error("no-key");
+      const convo = history.slice(-8).map(m => (m.from === "chan" ? "Guest: " : "Concierge: ") + m.text.replace(/\n/g, " ")).join("\n");
+      const raw = await callClaude({
+        system: conciergeSystem(),
+        user: (convo ? convo + "\n" : "") + "Guest: " + userText,
+        onDelta, maxTokens: 600
+      });
+      const parsed = extractJSON(raw);
+      if (!parsed || !parsed.reply) throw new Error("bad-json");
+      return { reply: parsed.reply, order: parsed.order || null, live: true };
+    } catch (err) {
+      if (err.message !== "no-key") toastFallback(err.message);
+      const lower = userText.toLowerCase();
+      for (const rule of BAKED.conciergeRules) {
+        if (rule.match.some(k => lower.includes(k))) return { reply: rule.reply, order: rule.order, live: false };
+      }
+      return { reply: BAKED.conciergeFallbackReply, order: { type: "amenity", title: "Guest request — concierge follow-up", etaMin: 8 }, live: false };
+    }
+  }
+
+  /* ================= EVENING BRIEF ================= */
+  async function eveningBrief(stats, onDelta) {
+    try {
+      if (!canCall()) throw new Error("no-key");
+      const raw = await callClaude({
+        system: "You are MAESTRO writing the duty manager's Evening Brief for the Harbour Grand Hotel & Club. Given the night's ops stats JSON, respond ONLY with JSON: {\"headline\":\"one punchy sentence with the key number\",\"bullets\":[\"6-8 crisp bullets, numbers first, ✅/⚠ where earned\"],\"tomorrow\":\"2-3 sentence look-ahead with one suggested focus\"}. No markdown.",
+        user: "TONIGHT'S STATS:\n" + JSON.stringify(stats, null, 1),
+        onDelta, maxTokens: 1200
+      });
+      const parsed = extractJSON(raw);
+      if (!parsed || !parsed.headline) throw new Error("bad-json");
+      return { ...parsed, live: true };
+    } catch (err) {
+      if (err.message !== "no-key") toastFallback(err.message);
+      return { ...bakedBrief(stats), live: false };
+    }
+  }
+
+  function toastFallback(msg) {
+    const el = document.getElementById("toast");
+    if (!el) return;
+    el.textContent = "⚡ Offline fallback engaged (" + msg + ") — using pre-baked Maestro intelligence";
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 4000);
+  }
+
+  return { settings, save, isLive, conductor, concierge, eveningBrief, callClaude, snapshotJSON, projectTowelDepletion, toastFallback };
+})();
+
+</script>
+<script>
+/* ============================================================
+   MAESTRO · app.js — rendering & interaction layer
+   Three panes: OPS BOARD · CONDUCTOR · GUEST PHONE
+   ============================================================ */
+
+const App = (() => {
+  const $ = sel => document.querySelector(sel);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const S = () => Engine.state;
+
+  /* =============== boot =============== */
+  let booted = false;
+  function boot() {
+    if (booted) return;
+    booted = true;
+    Engine.init();
+    wireControls();
+    wireSettings();
+    wireGuestInput();
+    wireEngineEvents();
+    renderAll();
+    // gentle idle: start paused so operator controls the curtain
+    Engine.log("Maestro online · watching Harbour Grand operations. Press ▶ to start the evening.", "ai");
+    renderAll();
+  }
+
+  /* =============== engine wiring =============== */
+  function wireEngineEvents() {
+    Engine.on("tick", () => renderClock());
+    Engine.on("state", () => renderAll());
+    Engine.on("event", ev => {
+      if (ev.kind === "conductor") runConductor(ev.beat);
+      if (ev.kind === "sickness") {
+        const ben = S().staff.find(s => s.id === "ben");
+        ben.status = "sick"; ben.shift = "OUT — sick";
+        const hiit = S().classes.find(c => c.id === "hiit");
+        hiit.status = "at-risk";
+        runConductor(ev.beat);
+      }
+      if (ev.kind === "chan-arrives") Engine.chanCheckIn();
+      if (ev.kind === "chan-checkout") Engine.checkoutChan();
+      if (ev.kind === "class-time") {
+        const hiit = S().classes.find(c => c.id === "hiit");
+        if (hiit.status === "at-risk" || hiit.status === "scheduled") {
+          hiit.status = "cancelled";
+          Engine.log("🚨 HIIT Burn cancelled — no trainer. 14 guests affected.", "crisis");
+        } else if (hiit.status === "swapped") {
+          Engine.log("🎉 HIIT Burn runs on time with Trainer Mei — 14 guests kept their Friday class.", "ok");
+          if (S().guest.checkedIn) Engine.pushGuestMsg("💪 HIIT Burn starts in moments with Trainer Mei — she's got low-impact variations ready for your knee. Locker " + SEED.vip.locker + ", towels staged. Have a great session!");
+        }
+      }
+      if (ev.kind === "towel-cliff") {
+        const proj = AI.projectTowelDepletion();
+        if (proj && S().towels.stock < 40 && !S().flags.includes("towel-low")) {
+          S().flags.push("towel-low");
+          Engine.log("⚠ Towel stock below 40 with depletion projected at " + Engine.fmt(proj) + ".", "crisis");
+        }
+      }
+      if (ev.kind === "close") {
+        Engine.log("🌙 Evening close — tap “Evening Brief” for Maestro's summary of the night.", "ai");
+      }
+    });
+  }
+
+  async function runConductor(beat, extra) {
+    const thinkEl = $("#think-stream");
+    thinkEl.classList.add("live");
+    thinkEl.textContent = "";
+    setConductorStatus("Maestro is analysing live operations…");
+    const res = await AI.conductor({
+      beat,
+      extra,
+      onDelta: (d, full) => { thinkEl.textContent = full; thinkEl.scrollTop = thinkEl.scrollHeight; }
+    });
+    thinkEl.classList.remove("live");
+    setConductorStatus(res.live ? "Analysis complete · live from Claude" : "Analysis complete · offline intelligence");
+    if (!res.live && !thinkEl.textContent) thinkEl.textContent = res.analysis;
+    Engine.proposeApproval(beat, res.analysis, res.actions);
+    renderConductor();
+  }
+  function setConductorStatus(txt) { $("#conductor-status").textContent = txt; }
+
+  /* =============== controls =============== */
+  function wireControls() {
+    $("#btn-play").onclick = () => { Engine.toggle(); renderClock(); };
+    $("#btn-jump").onclick = () => Engine.jumpToNextBeat();
+    $("#btn-brief").onclick = showBrief;
+    $("#btn-settings").onclick = () => $("#settings-modal").classList.add("open");
+    $("#btn-close-settings").onclick = () => $("#settings-modal").classList.remove("open");
+    $("#btn-close-brief").onclick = () => $("#brief-modal").classList.remove("open");
+    $("#speed").onchange = e => Engine.setSpeed(+e.target.value);
+    document.addEventListener("keydown", e => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      if (e.code === "Space") { e.preventDefault(); Engine.toggle(); renderClock(); }
+      if (e.key.toLowerCase() === "n") Engine.jumpToNextBeat();
+      if (e.key.toLowerCase() === "b") showBrief();
+    });
+  }
+
+  /* =============== settings =============== */
+  function wireSettings() {
+    const s = AI.settings();
+    $("#set-key").value = s.apiKey;
+    $("#set-model").value = s.model;
+    $("#set-base").value = s.base === "https://api.anthropic.com" ? "" : s.base;
+    $("#set-mode").value = s.mode;
+    $("#btn-save-settings").onclick = () => {
+      AI.save("maestro_key", $("#set-key").value.trim());
+      AI.save("maestro_model", $("#set-model").value.trim() || "claude-sonnet-4-5");
+      AI.save("maestro_base", $("#set-base").value.trim() || "https://api.anthropic.com");
+      AI.save("maestro_mode", $("#set-mode").value);
+      $("#settings-modal").classList.remove("open");
+      renderModeBadge();
+      Engine.log("⚙ Settings saved · mode: " + $("#set-mode").value, "info");
+    };
+    renderModeBadge();
+  }
+  function renderModeBadge() {
+    const s = AI.settings();
+    const badge = $("#mode-badge");
+    const live = AI.isLive();
+    badge.textContent = live ? "● LIVE · Claude " + s.model : "○ OFFLINE · baked intelligence";
+    badge.className = live ? "badge live" : "badge baked";
+  }
+
+  /* =============== renderers =============== */
+  function renderAll() {
+    renderClock(); renderKPIs(); renderTowels(); renderEquipment();
+    renderRoster(); renderClasses(); renderTasks(); renderLog(); renderFlags();
+    renderConductor(); renderGuest(); renderModeBadge();
+  }
+
+  function renderClock() {
+    const s = S();
+    $("#clock").textContent = Engine.fmt(s.t);
+    $("#clock-day").textContent = SEED.dayLabel + " · " + SEED.hotel;
+    $("#btn-play").textContent = s.running ? "⏸" : "▶";
+    const pct = ((s.t - SEED.startMin) / (SEED.endMin - SEED.startMin)) * 100;
+    $("#timeline-bar").style.width = pct + "%";
+    const nextBeat = s.timeline.filter(e => !e.fired).sort((a, b) => a.at - b.at)[0];
+    $("#next-beat").textContent = nextBeat ? "Next beat: " + Engine.fmt(nextBeat.at) : "Final beat";
+  }
+
+  function renderKPIs() {
+    const s = S();
+    const avgWait = s.arrivals.waits.length ? (s.arrivals.waits.reduce((a, b) => a + b, 0) / s.arrivals.waits.length).toFixed(1) : "0";
+    setKPI("kpi-gym", s.inGym + "/" + SEED.gymCapacity, "Gym occupancy", s.inGym > 42 ? "warn" : "ok");
+    setKPI("kpi-arrivals", s.arrivals.checkedIn + "/" + s.arrivals.total, "Checked in", s.arrivals.queue > 2 ? "bad" : "ok");
+    setKPI("kpi-wait", avgWait + "m", "Avg check-in wait", avgWait > 6 ? "bad" : avgWait > 3 ? "warn" : "ok");
+    setKPI("kpi-tasks", s.tasks.filter(t => t.status !== "done").length, "Open tasks", "ok");
+  }
+  function setKPI(id, value, label, tone) {
+    const el = document.getElementById(id);
+    el.querySelector(".kpi-value").textContent = value;
+    el.querySelector(".kpi-label").textContent = label;
+    el.querySelector(".kpi-value").className = "kpi-value " + tone;
+  }
+
+  function renderTowels() {
+    const s = S();
+    const pct = Math.min(100, (s.towels.stock / 160) * 100);
+    $("#towel-bar").style.width = pct + "%";
+    $("#towel-bar").className = "bar-fill " + (s.towels.stock < 25 ? "bad" : s.towels.stock < 60 ? "warn" : "ok");
+    $("#towel-num").textContent = Math.round(s.towels.stock);
+    $("#towel-laundry").textContent = s.towels.laundry + " clean in laundry";
+    const proj = AI.projectTowelDepletion();
+    $("#towel-proj").textContent = proj ? "⚠ projected depletion " + Engine.fmt(proj) : "✓ no depletion projected before close";
+    $("#towel-proj").className = "towel-proj " + (proj ? "warn" : "ok");
+  }
+
+  function renderEquipment() {
+    $("#equipment-grid").innerHTML = S().equipment.map(e => {
+      const tone = e.status === "offline" || e.status === "maintenance" ? "bad"
+        : e.status === "limited" ? "warn"
+        : e.health < 70 ? "bad" : e.health < 85 ? "warn" : "ok";
+      const statusLabel = { ok: "IN SERVICE", watch: "WATCH", limited: "LOAD-LIMITED", offline: "OFFLINE", maintenance: "MAINTENANCE" }[e.status] || e.status.toUpperCase();
+      return `<div class="eq-tile ${tone}">
+        <div class="eq-id">${esc(e.id)}</div>
+        <div class="eq-name">${esc(e.name)}</div>
+        <div class="eq-health"><div class="eq-health-fill ${tone}" style="width:${Math.max(4, e.health)}%"></div></div>
+        <div class="eq-meta"><span>${e.health.toFixed(0)}%</span><span class="eq-status ${tone}">${statusLabel}</span></div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderRoster() {
+    $("#roster").innerHTML = S().staff.map(s => {
+      const tone = s.status === "sick" ? "bad" : s.status === "off" ? "dim" : s.reassignedTo ? "moved" : "ok";
+      const role = s.reassignedTo && s.reassignUntil >= S().t ? s.role + " → " + s.reassignedTo : s.role;
+      const dot = { on: "●", off: "○", sick: "✕", call: "◐" }[s.status] || "●";
+      return `<div class="staff-chip ${tone}" title="${esc(s.name)} · ${esc(s.shift)}">
+        <span class="staff-dot">${dot}</span>
+        <div><div class="staff-name">${esc(s.name)}</div><div class="staff-role">${esc(role)}</div><div class="staff-shift">${esc(s.shift)}</div></div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderClasses() {
+    $("#classes").innerHTML = S().classes.map(c => {
+      const trainer = (S().staff.find(x => x.id === c.trainerId) || {}).name || "—";
+      const tone = c.status === "cancelled" ? "bad" : c.status === "at-risk" || c.status === "needs-trainer" ? "warn" : "ok";
+      const label = { scheduled: "SCHEDULED", swapped: "SAVED · trainer swapped", cancelled: "CANCELLED", "at-risk": "AT RISK · no trainer", "needs-trainer": "NEEDS TRAINER" }[c.status] || c.status;
+      return `<div class="class-row ${tone}"><b>${esc(c.name)}</b> ${esc(c.time)} · ${esc(trainer)} · ${c.booked} booked<span class="class-status ${tone}">${label}</span></div>`;
+    }).join("");
+  }
+
+  function renderTasks() {
+    const tasks = S().tasks.slice(0, 9);
+    $("#task-board").innerHTML = tasks.length ? tasks.map(t => `
+      <div class="task-row ${t.status === "done" ? "done" : ""}">
+        <span class="task-dept ${deptClass(t.department)}">${esc(t.department)}</span>
+        <span class="task-title">${esc(t.title)}</span>
+        <span class="task-who">${esc(t.assignee || "")}</span>
+        <span class="task-status ${t.status}">${Engine.labelFor(t.status) || t.status}</span>
+      </div>`).join("") : `<div class="empty">No tasks yet — the floor is quiet. For now.</div>`;
+  }
+  function deptClass(d) { return d.toLowerCase().replace(/[^a-z]/g, ""); }
+
+  function renderLog() {
+    $("#log").innerHTML = S().log.slice(0, 24).map(l =>
+      `<div class="log-row ${l.tag}"><span class="log-t">${l.t}</span><span>${esc(l.text)}</span></div>`).join("");
+  }
+
+  function renderFlags() {
+    const map = {
+      "towel-out": "🚨 TOWELS OUT — gym floor",
+      "towel-low": "⚠ Towel stock critical",
+      "queue": "🚨 Check-in queue > 8 min",
+      "t03-crit": "⚠ T-03 failure risk severe"
+    };
+    $("#flags").innerHTML = S().flags.map(f => map[f] ? `<div class="flag">${map[f]}</div>` : "").join("");
+  }
+
+  /* =============== conductor pane =============== */
+  function renderConductor() {
+    const s = S();
+    const q = $("#approval-queue");
+    q.innerHTML = s.approvals.map(card => `
+      <div class="appr-card" data-card="${card.id}">
+        <div class="appr-head">🧠 Maestro playbook · ${card.created} <span class="appr-beat">${card.beat === "beatA" ? "bottleneck scan" : card.beat === "beatB" ? "rostering shock" : "re-plan"}</span></div>
+        <div class="appr-analysis">${esc(card.analysis).replace(/\n/g, "<br>")}</div>
+        ${card.actions.map(a => actionHTML(card.id, a)).join("")}
+      </div>`).join("") ||
+      (s.history.length ? "" : `<div class="empty">Conductor standing by — watching arrivals, gym telemetry, laundry, roster & requests.</div>`);
+
+    // history (collapsed)
+    $("#conductor-history").innerHTML = s.history.map(card =>
+      `<div class="hist-row">${card.created} · ${card.actions.map(a => decisionIcon(a.decision)).join(" ")}</div>`).join("");
+
+    // wire buttons
+    q.querySelectorAll("[data-approve]").forEach(b => b.onclick = () => onDecide(b.dataset.approve, b.dataset.action, "approved"));
+    q.querySelectorAll("[data-reject]").forEach(b => b.onclick = () => onRejectPending(b.dataset.reject, b.dataset.action));
+    q.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => toggleEdit(b.dataset.edit, b.dataset.action));
+    q.querySelectorAll("[data-saveedit]").forEach(b => b.onclick = () => saveEdit(b.dataset.saveedit, b.dataset.action));
+  }
+  function decisionIcon(d) { return d === "approved" ? "✅" : d === "edited" ? "✏️" : d === "rejected" ? "✋" : "·"; }
+
+  function actionHTML(cardId, a) {
+    const sev = a.severity || "medium";
+    if (a.decision && a.decision !== "rejected") {
+      return `<div class="action resolved ${a.decision}">
+        <div class="action-title">${a.decision === "edited" ? "✏️" : "✅"} ${esc(a.title)}</div>
+        <div class="action-dept"><span class="dept-pill ${deptClass(a.department)}">${esc(a.department)}</span><span class="sev ${sev}">${sev}</span><span class="decision-note">${a.decision === "edited" ? "approved with edits — effects applied as amended" : "approved — effects applied"}</span></div>
+      </div>`;
+    }
+    if (a.decision === "rejected") {
+      return `<div class="action resolved rejected">
+        <div class="action-title">✋ ${esc(a.title)}</div>
+        <div class="action-dept"><span class="dept-pill ${deptClass(a.department)}">${esc(a.department)}</span><span class="decision-note">rejected — Maestro is re-planning around the manager's constraint</span></div>
+      </div>`;
+    }
+    if (a.pendingReject) {
+      return `<div class="action rejected-card">
+        <div class="action-title">✋ ${esc(a.title)}</div>
+        <div class="reject-box">
+          <div class="reject-label">Tell Maestro why — it will re-plan:</div>
+          <div class="reject-chips">
+            <button class="chip" data-reason="${cardId}" data-action="${a.id}">Laundry is short-staffed</button>
+            <button class="chip" data-reason="${cardId}" data-action="${a.id}">Overtime not allowed tonight</button>
+            <button class="chip" data-reason="${cardId}" data-action="${a.id}">Handle it after the peak</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    const editable = a.effect && typeof a.effect === "object"
+      ? Object.entries(a.effect).filter(([k, v]) => k !== "type" && (typeof v === "number" || typeof v === "string"))
+      : [];
+    return `<div class="action" id="action-${cardId}-${a.id}">
+      <div class="action-title">${esc(a.title)}</div>
+      <div class="action-dept"><span class="dept-pill ${deptClass(a.department)}">${esc(a.department)}</span><span class="sev ${sev}">${sev}</span></div>
+      <div class="action-why">${esc(a.rationale || "")}</div>
+      <div class="edit-box hidden" id="edit-${cardId}-${a.id}">
+        ${editable.map(([k, v]) => `<label>${esc(k)} <input class="edit-field" data-k="${esc(k)}" value="${esc(v)}" ${typeof v === "number" ? 'type="number"' : ""}></label>`).join("")}
+      </div>
+      <div class="action-btns">
+        <button class="btn approve" data-approve="${cardId}" data-action="${a.id}">✓ Approve</button>
+        <button class="btn edit" data-edit="${cardId}" data-action="${a.id}">✏️ Edit</button>
+        <button class="btn reject" data-reject="${cardId}" data-action="${a.id}">✋ Reject</button>
+        <button class="btn approve hidden" data-saveedit="${cardId}" data-action="${a.id}">Save & approve</button>
+      </div>
+    </div>`;
+  }
+
+  function onDecide(cardId, actionId, decision) {
+    Engine.decide(cardId, actionId, decision);
+    renderAll();
+  }
+  function onRejectPending(cardId, actionId) {
+    const card = S().approvals.find(c => c.id === cardId);
+    if (!card) return;
+    const a = card.actions.find(x => x.id === actionId);
+    if (a) a.pendingReject = true;
+    renderConductor();
+  }
+  function toggleEdit(cardId, actionId) {
+    const box = document.getElementById("edit-" + cardId + "-" + actionId);
+    box.classList.toggle("hidden");
+  }
+  function saveEdit(cardId, actionId) {
+    const box = document.getElementById("edit-" + cardId + "-" + actionId);
+    const patch = {};
+    box.querySelectorAll(".edit-field").forEach(inp => {
+      const v = inp.value;
+      patch[inp.dataset.k] = inp.type === "number" ? +v : v;
+    });
+    Engine.decide(cardId, actionId, "edited", patch);
+    renderAll();
+  }
+  // reject-with-reason → re-plan through the Conductor
+  document.addEventListener("click", async e => {
+    const chip = e.target.closest("[data-reason]");
+    if (!chip) return;
+    const cardId = chip.dataset.reason, actionId = chip.dataset.action;
+    const card = S().history.find(c => c.id === cardId) || S().approvals.find(c => c.id === cardId);
+    const beat = card ? card.beat : "replan";
+    Engine.decide(cardId, actionId, "rejected");
+    renderAll();
+    await runConductor("replan", "Manager rejected: \"" + chip.textContent + "\". Respect this constraint and propose an alternative playbook.");
+  });
+
+  /* =============== guest phone =============== */
+  function renderGuest() {
+    const s = S();
+    const feed = $("#guest-feed");
+    if (!s.guest.unlocked) {
+      $("#guest-lock").classList.remove("hidden");
+      feed.innerHTML = "";
+      $("#guest-tracker").innerHTML = "";
+      return;
+    }
+    $("#guest-lock").classList.add("hidden");
+    $("#phone-sub").textContent = s.guest.checkedOut ? "Room 1208 · Checked out ✓" : "Room 1208 · Gold Member";
+    feed.innerHTML = s.guest.messages.map(m =>
+      `<div class="msg ${m.from === "chan" ? "them" : "bot"}"><div class="msg-text">${esc(m.text).replace(/\n/g, "<br>")}</div><div class="msg-t">${m.t}</div></div>`).join("");
+    feed.scrollTop = feed.scrollHeight;
+
+    const open = s.tasks.filter(t => t.guestId === "chan" && t.status !== "done");
+    const recent = s.tasks.filter(t => t.guestId === "chan").slice(0, 3);
+    const input = $("#guest-input");
+    input.disabled = !!s.guest.checkedOut;
+    input.placeholder = s.guest.checkedOut ? "Folio closed — see you next time ✨" : "Ask Maestro anything…";
+    $("#guest-tracker").innerHTML = recent.length ? recent.map(t => `
+      <div class="tracker-card ${t.status === "done" ? "done" : ""}">
+        <div class="tracker-title">${esc(t.title)}</div>
+        <div class="tracker-steps">
+          ${["received", "assigned", "en_route", "done"].map((k, i) => `
+            <div class="tstep ${i <= t.stepIdx ? "on" : ""}">
+              <div class="tdot"></div><div class="tlabel">${{ received: "Received", assigned: "Assigned", en_route: "On the way", done: "Done" }[k]}</div>
+            </div>`).join('<div class="tline"></div>')}
+        </div>
+        <div class="tracker-eta">${t.status === "done" ? "Completed ✨" : "ETA " + t.etaMin + " min · " + esc(t.assignee || "")}</div>
+      </div>`).join("") : "";
+  }
+
+  function wireGuestInput() {
+    const input = $("#guest-input");
+    const send = async () => {
+      const text = input.value.trim();
+      if (!text) return;
+      const s = S();
+      if (!s.guest.unlocked) { Engine.log("Guest pane unlocks when Ms. Chan checks in at 18:05 (or tap “Jump to next beat”).", "warn"); return; }
+      input.value = "";
+      s.guest.messages.push({ from: "chan", text, t: Engine.fmt(s.t) });
+      renderGuest();
+      const t0 = performance.now();
+      const think = $("#guest-think");
+      think.classList.remove("hidden");
+      think.textContent = "Maestro is reading…";
+      const res = await AI.concierge(text, s.guest.messages, (d, full) => { think.textContent = full.slice(-240); });
+      think.classList.add("hidden");
+      const respMin = Math.max(1, Math.round((performance.now() - t0) / 1000));
+      s.stats.responses.push(respMin);
+      Engine.addGuestRequest(res.order, res.reply);
+      Engine.log("💬 Guest request handled via concierge (" + (res.live ? "live Claude" : "offline") + "): " + (res.order ? res.order.title : "chat only"), "guest");
+      renderAll();
+    };
+    input.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
+    $("#guest-send").onclick = send;
+  }
+
+  /* =============== evening brief =============== */
+  async function showBrief() {
+    const modal = $("#brief-modal");
+    modal.classList.add("open");
+    const body = $("#brief-body");
+    body.innerHTML = `<div class="brief-loading">Maestro is writing tonight's brief<span class="dots">…</span></div>`;
+    const stats = Engine.briefStats();
+    const think = document.createElement("div");
+    think.className = "think-stream small";
+    body.appendChild(think);
+    const res = await AI.eveningBrief(stats, (d, full) => { think.textContent = full; });
+    body.innerHTML = `
+      <div class="brief-head">🌙 Evening Brief · ${SEED.dayLabel} ${Engine.fmt(S().t)} · ${esc(SEED.hotel)}</div>
+      <div class="brief-headline">${esc(res.headline)}</div>
+      <ul class="brief-bullets">${(res.bullets || []).map(b => `<li>${esc(b)}</li>`).join("")}</ul>
+      <div class="brief-tomorrow"><b>Tomorrow</b><br>${esc(res.tomorrow || "")}</div>
+      <div class="brief-foot">${res.live ? "Written live by Claude from tonight's ops telemetry" : "Offline template · wire an API key for live writing"}</div>`;
+  }
+
+  return { boot };
+})();
+
+document.addEventListener("DOMContentLoaded", App.boot);
+
+</script>
+</body>
+</html>

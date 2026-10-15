@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAESTRO · Hospitality Operations Conductor</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <div class="brand">
+    <div class="logo">M</div>
+    <div>
+      <div class="brand-name">MAESTRO</div>
+      <div class="brand-sub">the operations conductor</div>
+    </div>
+  </div>
+
+  <div class="clock-wrap">
+    <div id="clock">17:30</div>
+    <div id="clock-day">Friday · Harbour Grand Hotel &amp; Club</div>
+    <div class="timeline"><div id="timeline-bar"></div></div>
+    <div id="next-beat" class="next-beat">Next beat: 17:40</div>
+  </div>
+
+  <div class="controls">
+    <button id="btn-play" class="ctrl" title="Play / pause (Space)">▶</button>
+    <select id="speed" class="ctrl" title="Simulation speed">
+      <option value="10">10×</option>
+      <option value="20">20×</option>
+      <option value="30">30×</option>
+      <option value="60" selected>60×</option>
+      <option value="120">120×</option>
+      <option value="300">300×</option>
+    </select>
+    <button id="btn-jump" class="ctrl wide" title="Jump to next beat (N)">⏭ Next beat</button>
+    <button id="btn-brief" class="ctrl wide gold" title="Evening Brief (B)">🌙 Evening Brief</button>
+    <button id="btn-settings" class="ctrl" title="Settings">⚙</button>
+    <div id="mode-badge" class="badge baked">○ OFFLINE · baked intelligence</div>
+  </div>
+</header>
+
+<!-- ============ THREE PANES ============ -->
+<main>
+
+  <!-- ======= LEFT · OPS BOARD ======= -->
+  <section class="pane ops">
+    <div id="flags" class="flags"></div>
+
+    <div class="kpi-row">
+      <div class="kpi" id="kpi-gym"><div class="kpi-value ok">18/60</div><div class="kpi-label">Gym occupancy</div></div>
+      <div class="kpi" id="kpi-arrivals"><div class="kpi-value ok">0/28</div><div class="kpi-label">Checked in</div></div>
+      <div class="kpi" id="kpi-wait"><div class="kpi-value ok">0m</div><div class="kpi-label">Avg check-in wait</div></div>
+      <div class="kpi" id="kpi-tasks"><div class="kpi-value ok">0</div><div class="kpi-label">Open tasks</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">🧺 Towel loop <span class="card-sub">gym floor ⇄ laundry</span></div>
+      <div class="towel-row">
+        <div class="towel-bar"><div id="towel-bar" class="bar-fill ok"></div></div>
+        <div class="towel-num"><span id="towel-num">120</span> on floor</div>
+      </div>
+      <div class="towel-meta">
+        <span id="towel-laundry">85 clean in laundry</span>
+        <span id="towel-proj" class="towel-proj ok">✓ no depletion projected before close</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">🏋️ Equipment readiness <span class="card-sub">live telemetry · T-03 is Ms. Chan's usual machine</span></div>
+      <div id="equipment-grid" class="equipment-grid"></div>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <div class="card-head">👥 Roster tonight</div>
+        <div id="roster" class="roster"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">📅 Classes</div>
+        <div id="classes"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">🧾 Task board <span class="card-sub">back-of-house dispatch</span></div>
+      <div id="task-board" class="task-board"><div class="empty">No tasks yet — the floor is quiet. For now.</div></div>
+    </div>
+
+    <div class="card grow">
+      <div class="card-head">📡 Activity feed</div>
+      <div id="log" class="log"></div>
+    </div>
+  </section>
+
+  <!-- ======= CENTER · CONDUCTOR ======= -->
+  <section class="pane conductor">
+    <div class="pane-head">
+      <span class="pane-title">🧠 MAESTRO CONDUCTOR</span>
+      <span id="conductor-status" class="conductor-status">standing by · watching all systems</span>
+    </div>
+
+    <div id="think-stream" class="think-stream"></div>
+
+    <div id="approval-queue" class="approval-queue">
+      <div class="empty">Conductor standing by — watching arrivals, gym telemetry, laundry, roster &amp; requests.</div>
+    </div>
+
+    <div class="hist-wrap">
+      <div class="hist-head">Decision history · humans stay in control</div>
+      <div id="conductor-history"></div>
+    </div>
+  </section>
+
+  <!-- ======= RIGHT · GUEST PHONE ======= -->
+  <section class="pane guest-pane">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-head">
+        <div class="phone-avatar">陈</div>
+        <div>
+          <div class="phone-name">Ms. Chan</div>
+          <div class="phone-sub" id="phone-sub">Room 1208 · Gold Member</div>
+        </div>
+        <div class="phone-live">LIVE</div>
+      </div>
+
+      <div id="guest-lock" class="guest-lock">
+        <div class="qr">▦</div>
+        <div class="lock-text">Phone unlocks when Ms. Chan<br>checks in at <b>18:05</b></div>
+        <div class="lock-sub">(or press ⏭ Next beat)</div>
+      </div>
+
+      <div id="guest-feed" class="guest-feed"></div>
+
+      <div id="guest-tracker" class="guest-tracker"></div>
+
+      <div id="guest-think" class="guest-think hidden"></div>
+
+      <div class="guest-input-row">
+        <input id="guest-input" type="text" placeholder="Ask Maestro anything…" autocomplete="off">
+        <button id="guest-send">➤</button>
+      </div>
+    </div>
+    <div class="guest-caption">front-of-house · every request becomes a tracked back-of-house task</div>
+  </section>
+
+</main>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div id="settings-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-head">⚙ Maestro settings <button id="btn-close-settings" class="modal-x">✕</button></div>
+    <label>Anthropic API key <span class="hint">(stays in this browser only — sent direct to Claude)</span>
+      <input id="set-key" type="password" placeholder="sk-ant-…">
+    </label>
+    <label>Claude proxy base URL <span class="hint">(optional — for gateways / relays; leave blank for api.anthropic.com)</span>
+      <input id="set-base" type="text" placeholder="https://api.anthropic.com">
+    </label>
+    <label>Model
+      <input id="set-model" type="text" placeholder="claude-sonnet-4-5">
+    </label>
+    <label>Demo mode
+      <select id="set-mode">
+        <option value="auto">Auto — live Claude if key present, else offline</option>
+        <option value="live">Force live (fail loudly if no key)</option>
+        <option value="baked">Force offline (pre-baked intelligence)</option>
+      </select>
+    </label>
+    <button id="btn-save-settings" class="btn approve full">Save</button>
+  </div>
+</div>
+
+<!-- ============ EVENING BRIEF MODAL ============ -->
+<div id="brief-modal" class="modal">
+  <div class="modal-box wide">
+    <div class="modal-head">🌙 Evening Brief <button id="btn-close-brief" class="modal-x">✕</button></div>
+    <div id="brief-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="ai.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
